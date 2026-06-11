@@ -1,0 +1,266 @@
+{
+  "users": [],
+  "store": {
+    "store_name": "Shree Kirana Mart",
+    "owner_name": "Amit Sharma",
+    "phone": "9876543210",
+    "store_category": "Kirana Store"
+  },
+  "products": [
+    {
+      "id": "7f92fc6b-f1bc-4355-ba63-2567ea3b378b",
+      "name": "Aashirvaad Atta 5kg",
+      "barcode": "8901725123456",
+      "category": "Grocery",
+      "cost_price": 205,
+      "selling_price": 245,
+      "stock": 32
+    },
+    {
+      "id": "fc228b9f-14b0-4676-9976-06d79141e728",
+      "name": "Amul Taaza Milk 1L",
+      "barcode": "8901262011013",
+      "category": "Dairy",
+      "cost_price": 58,
+      "selling_price": 66,
+      "stock": 72
+    },
+    {
+      "id": "f09a5305-9d1c-42f5-aec9-2c494f10cee2",
+      "name": "Classmate Notebook 172 pages",
+      "barcode": "8902519001123",
+      "category": "Stationery",
+      "cost_price": 48,
+      "selling_price": 65,
+      "stock": 7
+    },
+    {
+      "id": "26634ae9-3c8b-4b8e-b54c-dd3845542393",
+      "name": "Parle-G Family Pack",
+      "barcode": "8901719100012",
+      "category": "Snacks",
+      "cost_price": 42,
+      "selling_price": 50,
+      "stock": 56
+    },
+    {
+      "id": "e7e3826a-9888-42fc-972b-56da9f0ef8a4",
+      "name": "Tata Salt 1kg",
+      "barcode": "8904043901015",
+      "category": "Grocery",
+      "cost_price": 22,
+      "selling_price": 28,
+      "stock": 52
+    }
+  ],
+  "sales": [
+    {
+      "id": "647c28c6-bdd6-4bb6-a252-78e2cb33968c",
+      "bill_number": "BILL-00001",
+      "created_at": "2026-06-11T04:35:32.308194+00:00",
+      "items": [
+        {
+          "product_id": "7f92fc6b-f1bc-4355-ba63-2567ea3b378b",
+          "name": "Aashirvaad Atta 5kg",
+          "cost_price": 205,
+          "selling_price": 245,
+          "quantity": 1
+        }
+      ],
+      "total_amount": 245,
+      "total_profit": 40
+    },
+    {
+      "id": "90344c19-0a1c-4d26-93f2-7ca8ba3bc7c7",
+      "bill_number": "BILL-00002",
+      "created_at": "2026-06-11T05:23:07.440823+00:00",
+      "items": [
+        {
+          "product_id": "e7e3826a-9888-42fc-972b-56da9f0ef8a4",
+          "name": "Tata Salt 1kg",
+          "cost_price": 22,
+          "selling_price": 28,
+          "quantity": 1
+        }
+      ],
+      "total_amount": 28,
+      "total_profit": 6
+    },
+    {
+      "id": "290c8be9-0f14-454d-acc8-7cd3c00fb66c",
+      "bill_number": "BILL-00003",
+      "created_at": "2026-06-11T05:23:21.628765+00:00",
+      "items": [
+        {
+          "product_id": "26634ae9-3c8b-4b8e-b54c-dd3845542393",
+          "name": "Parle-G Family Pack",
+          "cost_price": 42,
+          "selling_price": 50,
+          "quantity": 1
+        },
+        {
+          "product_id": "7f92fc6b-f1bc-4355-ba63-2567ea3b378b",
+          "name": "Aashirvaad Atta 5kg",
+          "cost_price": 205,
+          "selling_price": 245,
+          "quantity": 1
+        },
+        {
+          "product_id": "e7e3826a-9888-42fc-972b-56da9f0ef8a4",
+          "name": "Tata Salt 1kg",
+          "cost_price": 22,
+          "selling_price": 28,
+          "quantity": 1
+        }
+      ],
+      "total_amount": 323,
+      "total_profit": 54
+    },
+    {
+      "id": "09feac87-2683-445d-b070-3951b38a58e3",
+      "bill_number": "BILL-00004",
+      "created_at": "2026-06-11T06:33:50.144316+00:00",
+      "items": [
+        {
+          "product_id": "26634ae9-3c8b-4b8e-b54c-dd3845542393",
+          "name": "Parle-G Family Pack",
+          "cost_price": 42,
+          "selling_price": 50,
+          "quantity": 1
+        },
+        {
+          "product_id": "f09a5305-9d1c-42f5-aec9-2c494f10cee2",
+          "name": "Classmate Notebook 172 pages",
+          "cost_price": 48,
+          "selling_price": 65,
+          "quantity": 1
+        }
+      ],
+      "total_amount": 115,
+      "total_profit": 25
+    },
+    {
+      "id": "365d2a21-a46f-4f9e-a6e4-5e01e0ac578e",
+      "bill_number": "BILL-00005",
+      "created_at": "2026-06-11T07:20:54.419021+00:00",
+      "customer_id": null,
+      "items": [
+        {
+          "product_id": "f09a5305-9d1c-42f5-aec9-2c494f10cee2",
+          "name": "Classmate Notebook 172 pages",
+          "cost_price": 48,
+          "selling_price": 65,
+          "quantity": 2
+        }
+      ],
+      "total_amount": 130,
+      "total_profit": 34
+    },
+    {
+      "id": "68d38c3f-2fb2-4486-bf35-d7d8c899a012",
+      "bill_number": "BILL-00006",
+      "created_at": "2026-06-11T07:21:00.985277+00:00",
+      "customer_id": null,
+      "items": [
+        {
+          "product_id": "f09a5305-9d1c-42f5-aec9-2c494f10cee2",
+          "name": "Classmate Notebook 172 pages",
+          "cost_price": 48,
+          "selling_price": 65,
+          "quantity": 5
+        }
+      ],
+      "total_amount": 325,
+      "total_profit": 85
+    },
+    {
+      "id": "0f1be835-694e-4d3a-b092-41176aad943e",
+      "bill_number": "BILL-00007",
+      "created_at": "2026-06-11T10:35:11.496839+00:00",
+      "customer_id": null,
+      "items": [
+        {
+          "product_id": "26634ae9-3c8b-4b8e-b54c-dd3845542393",
+          "name": "Parle-G Family Pack",
+          "cost_price": 42,
+          "selling_price": 50,
+          "quantity": 1
+        },
+        {
+          "product_id": "f09a5305-9d1c-42f5-aec9-2c494f10cee2",
+          "name": "Classmate Notebook 172 pages",
+          "cost_price": 48,
+          "selling_price": 65,
+          "quantity": 1
+        }
+      ],
+      "total_amount": 115,
+      "total_profit": 25
+    },
+    {
+      "id": "c2fedcc3-9ec7-4a55-937d-424d037534f9",
+      "bill_number": "BILL-00008",
+      "created_at": "2026-06-11T11:07:12.393938+00:00",
+      "customer_id": null,
+      "items": [
+        {
+          "product_id": "e7e3826a-9888-42fc-972b-56da9f0ef8a4",
+          "name": "Tata Salt 1kg",
+          "cost_price": 22,
+          "selling_price": 28,
+          "quantity": 3
+        }
+      ],
+      "total_amount": 84,
+      "total_profit": 18
+    }
+  ],
+  "customers": [],
+  "udhaar": [],
+  "purchases": [
+    {
+      "id": "cde886db-d3f7-46eb-b070-4ed82b8da444",
+      "created_at": "2026-06-11T10:34:54.223132+00:00",
+      "product_name": "Tata Salt 1kg",
+      "total_cost": 0.0,
+      "product_id": "e7e3826a-9888-42fc-972b-56da9f0ef8a4",
+      "supplier_name": "Invoice Import",
+      "quantity": 24,
+      "cost_price": 0.0,
+      "purchase_date": null
+    },
+    {
+      "id": "bafadddd-4aa6-4db7-a6c5-1f5d5fae2978",
+      "created_at": "2026-06-11T10:34:54.232573+00:00",
+      "product_name": "Aashirvaad Atta 5kg",
+      "total_cost": 0.0,
+      "product_id": "7f92fc6b-f1bc-4355-ba63-2567ea3b378b",
+      "supplier_name": "Invoice Import",
+      "quantity": 10,
+      "cost_price": 0.0,
+      "purchase_date": null
+    },
+    {
+      "id": "705630d2-e26e-47a2-b62f-e448a5e47970",
+      "created_at": "2026-06-11T10:34:54.240728+00:00",
+      "product_name": "Amul Taaza Milk 1L",
+      "total_cost": 0.0,
+      "product_id": "fc228b9f-14b0-4676-9976-06d79141e728",
+      "supplier_name": "Invoice Import",
+      "quantity": 30,
+      "cost_price": 0.0,
+      "purchase_date": null
+    },
+    {
+      "id": "14d8b8b8-d679-47f7-83c8-4926d907a9fc",
+      "created_at": "2026-06-11T10:34:54.249372+00:00",
+      "product_name": "Parle-G Family Pack",
+      "total_cost": 0.0,
+      "product_id": "26634ae9-3c8b-4b8e-b54c-dd3845542393",
+      "supplier_name": "Invoice Import",
+      "quantity": 50,
+      "cost_price": 0.0,
+      "purchase_date": null
+    }
+  ]
+}
