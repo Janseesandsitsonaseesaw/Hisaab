@@ -176,9 +176,9 @@ def parse_items(raw: str) -> list[InvoiceItem]:
     return items
 
 
-def get_user_id_dep(authorization: Optional[str] = Header(default=None), token: Optional[str] = Query(default=None)) -> str:
+def get_user_id_dep(authorization: Optional[str] = Header(default=None)) -> str:
     from app.main import get_current_user_id
-    return get_current_user_id(authorization, token)
+    return get_current_user_id(authorization)
 
 
 @router.post("/extract", response_model=ExtractionResult)

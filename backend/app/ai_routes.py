@@ -28,13 +28,10 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def get_current_user_id(
     authorization: Optional[str] = Header(default=None),
-    token: Optional[str] = Query(default=None),
 ) -> str:
     jwt_token = None
     if authorization and authorization.startswith("Bearer "):
         jwt_token = authorization.split(" ")[1]
-    elif token:
-        jwt_token = token
         
     if not jwt_token:
         raise HTTPException(status_code=401, detail="Unauthorized: Authentication token missing")

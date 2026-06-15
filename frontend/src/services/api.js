@@ -99,9 +99,21 @@ export async function printInvoice(saleId) {
     console.error(e);
   }
 
-  const url = `${API_URL}/invoices/${saleId}/pdf?token=${encodeURIComponent(token)}`;
+  const response = await fetch(
+    `${API_URL}/invoices/${saleId}/pdf`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  if (!response.ok) throw new Error("Failed to generate invoice");
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
   const win = window.open(url, "_blank");
-  if (win) win.print();
+  if (win) {
+    win.focus();
+  }
 }
 
 export function buildReceiptMessage(sale, store, customer) {
