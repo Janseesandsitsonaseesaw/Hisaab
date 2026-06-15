@@ -47,7 +47,9 @@ def get_current_user_id(
     except AuthApiError as e:
         raise HTTPException(status_code=401, detail=f"Unauthorized: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=401, detail="Unauthorized: Invalid or expired session token")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=401, detail=f"Unauthorized: {str(e)}")
 
 
 def parse_date(value: str) -> datetime:

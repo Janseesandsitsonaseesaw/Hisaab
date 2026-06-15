@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Users, Plus, Edit2, Trash2, ChevronLeft, Phone, Mail, MapPin,
   TrendingUp, TrendingDown, IndianRupee, AlertCircle, CheckCircle2,
@@ -21,6 +21,7 @@ export default function Customers({
   udhaarForm, setUdhaarForm,
   saveUdhaarEntry,
 }) {
+  const [customerToDelete, setCustomerToDelete] = useState(null);
   return (
     <div className="fade-in">
       {selectedCustomer ? (
@@ -42,7 +43,7 @@ export default function Customers({
             </div>
             <div style={{ marginLeft: "auto", display: "flex", gap: "8px" }}>
               <button className="btn btn-secondary btn-sm" onClick={() => setEditingCustomer(selectedCustomer)}><Edit2 size={14} /> Edit</button>
-              <button className="btn btn-ghost btn-sm text-danger" onClick={() => deleteCustomer(selectedCustomer.id)}><Trash2 size={14} /></button>
+              <button className="btn btn-ghost btn-sm text-danger" onClick={() => setCustomerToDelete(selectedCustomer.id)}><Trash2 size={14} /></button>
             </div>
           </div>
 
@@ -273,7 +274,7 @@ export default function Customers({
                         <td>
                           <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                             <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setEditingCustomer(customer); }}><Edit2 size={16} /></button>
-                            <button className="btn btn-ghost btn-sm text-danger" onClick={(e) => { e.stopPropagation(); deleteCustomer(customer.id); }}><Trash2 size={16} /></button>
+                            <button className="btn btn-ghost btn-sm text-danger" onClick={(e) => { e.stopPropagation(); setCustomerToDelete(customer.id); }}><Trash2 size={16} /></button>
                           </div>
                         </td>
                       </tr>
@@ -289,6 +290,39 @@ export default function Customers({
                 <button className="btn btn-primary btn-sm" onClick={() => setEditingCustomer({})}>Add Customer</button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {customerToDelete && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          backdropFilter: "blur(2px)"
+        }}>
+          <div className="card" style={{ width: "100%", maxWidth: "400px", padding: "24px", boxShadow: "0 10px 25px rgba(0,0,0,0.15)", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", color: "var(--danger)" }}>
+              <AlertCircle size={24} />
+              <h3 style={{ fontSize: "1.15rem", fontWeight: "bold", margin: 0, color: "var(--text-primary)" }}>Confirm Deletion</h3>
+            </div>
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+              Are you sure you want to delete this customer? This will also remove all their associated credit and udhaar transaction history.
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setCustomerToDelete(null)}>Cancel</button>
+              <button className="btn btn-danger btn-sm" onClick={async () => {
+                await deleteCustomer(customerToDelete);
+                setCustomerToDelete(null);
+                setSelectedCustomer(null);
+              }}>Delete</button>
+            </div>
           </div>
         </div>
       )}

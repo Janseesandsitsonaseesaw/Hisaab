@@ -819,7 +819,6 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
   }
 
   async function deleteCustomer(customerId) {
-    if (!window.confirm("Are you sure you want to delete this customer?")) return;
     try {
       await api(`/customers/${customerId}`, { method: "DELETE" });
       showNotice("Customer deleted");

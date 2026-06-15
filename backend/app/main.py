@@ -78,7 +78,8 @@ def get_current_user_id(
             supabase.table("users").insert({
                 "id": user_id,
                 "name": name,
-                "email": email
+                "email": email,
+                "password": "SUPABASE_MANAGED"
             }).execute()
             
             # Initialize default store profile
@@ -100,7 +101,9 @@ def get_current_user_id(
     except AuthApiError as e:
         raise HTTPException(status_code=401, detail=f"Unauthorized: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=401, detail="Unauthorized: Invalid or expired session token")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=401, detail=f"Unauthorized: {str(e)}")
 
 LOW_STOCK_THRESHOLD = 10
 
@@ -277,7 +280,7 @@ def register(payload: UserIn, request: Request, ip: str = Depends(get_client_ip)
             raise HTTPException(status_code=400, detail="Registration failed via Supabase")
         
         user_id = res.user.id
-        user = {"id": user_id, "name": payload.name, "email": payload.email.lower()}
+        user = {"id": user_id, "name": payload.name, "email": payload.email.lower(), "password": "SUPABASE_MANAGED"}
         
         # Insert profile into our database
         supabase.table("users").insert(user).execute()
@@ -762,6 +765,18 @@ def update_customer(customer_id: str, payload: CustomerIn, user_id: str = Depend
     updated = {"id": customer_id, "user_id": user_id, **payload.model_dump()}
     res = supabase.table("customers").update(updated).eq("id", customer_id).eq("user_id", user_id).execute()
     return {**res.data[0], **customer_udhaar_summary(customer_id, user_id)}
+
+
+@app.delete("/customers/{customer_id}")
+def delete_customer(customer_id: str, user_id: str = Depends(get_current_user_id)) -> dict:
+    rows = supabase.table("customers").select("*").eq("id", customer_id).eq("user_id", user_id).execute().data or []
+    if not rows:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Delete related udhaar entries and then the customer profile itself
+    supabase.table("udhaar").delete().eq("customer_id", customer_id).eq("user_id", user_id).execute()
+    supabase.table("customers").delete().eq("id", customer_id).eq("user_id", user_id).execute()
+    return {"status": "success"}
 
 @app.post("/udhaar")
 def create_udhaar(payload: UdhaarEntryIn, user_id: str = Depends(get_current_user_id)) -> dict:

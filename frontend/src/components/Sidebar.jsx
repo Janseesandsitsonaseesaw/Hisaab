@@ -24,9 +24,9 @@ export default function Sidebar({ activeTab, setActiveTab, store, isSidebarOpen,
   return (
     <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
       <div className="sidebar-header">
-        <div className="brand">
+        <div className="brand" onClick={() => nav("dashboard")} style={{ cursor: "pointer" }}>
           <div className="brand-icon">
-            {store.logo_data_url ? (
+            {store?.logo_data_url ? (
               <img src={store.logo_data_url} alt="Logo" />
             ) : (
               <Hexagon size={18} strokeWidth={3} />
