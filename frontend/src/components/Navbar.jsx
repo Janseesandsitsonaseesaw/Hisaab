@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Bell, Search, Settings, LogOut, Menu, ArrowRight, AlertCircle,
-  Receipt, Package, CreditCard,
+  Receipt, Package, CreditCard, X, Wallet, Truck, Info,
 } from "lucide-react";
 
 const activityConfig = {
@@ -9,14 +9,8 @@ const activityConfig = {
   stock:   { bg: "#fef3c7", color: "#d97706", icon: Package },
   payment: { bg: "#d1fae5", color: "#059669", icon: CreditCard },
   alert:   { bg: "#fee2e2", color: "#dc2626", icon: AlertCircle },
+  udhaar:  { bg: "#ffedd5", color: "#ea580c", icon: Wallet },
 };
-
-const mockActivityFeed = [
-  { id: 1, type: "bill",    title: "Bill #1042 created",       time: "10 mins ago" },
-  { id: 2, type: "stock",   title: "Stock updated: Parle-G",   time: "1 hour ago" },
-  { id: 3, type: "payment", title: "Payment received ₹450",    time: "2 hours ago" },
-  { id: 4, type: "alert",   title: "Low stock: Amul Butter",   time: "3 hours ago" },
-];
 
 export default function Navbar({
   store, activeTab, setActiveTab,
@@ -29,11 +23,46 @@ export default function Navbar({
   isProfileOpen, setIsProfileOpen, profileRef,
   setIsSidebarOpen,
   getInitials,
+  handleLogout,
+  products = [],
+  customers = [],
+  sales = [],
+  notifications = [],
+  readNotifIds = [],
+  markNotifRead,
+  markAllNotifsRead,
 }) {
-  const notifCount = lowStockList.length;
+  const [globalQuery, setGlobalQuery] = useState("");
+
+  const unreadNotifications = notifications.filter(n => !readNotifIds.includes(n.id));
+  const notifCount = unreadNotifications.length;
+
+  // Global Search Filtering
+  const cleanQuery = globalQuery.trim().toLowerCase();
+  const searchProducts = cleanQuery
+    ? products.filter(p => p.name.toLowerCase().includes(cleanQuery) || p.barcode?.includes(cleanQuery) || p.category.toLowerCase().includes(cleanQuery))
+    : [];
+  const searchCustomers = cleanQuery
+    ? customers.filter(c => c.name.toLowerCase().includes(cleanQuery) || c.phone?.includes(cleanQuery))
+    : [];
+  const searchSales = cleanQuery
+    ? sales.filter(s => s.bill_number.toLowerCase().includes(cleanQuery))
+    : [];
+
+  const hasSearchResults = searchProducts.length > 0 || searchCustomers.length > 0 || searchSales.length > 0;
+
+  const handleNotificationClick = (n) => {
+    markNotifRead(n.id);
+    if (n.tab === "products") setProductQuery(n.query);
+    else if (n.tab === "history") setHistoryQuery(n.query);
+    else if (n.tab === "customers") setCustomerQuery(n.query);
+    else if (n.tab === "purchases") setPurchaseQuery(n.query);
+    setActiveTab(n.tab);
+    setIsNotifOpen(false);
+  };
 
   return (
-    <header className="navbar">
+    <header className="navbar" style={{ position: "relative" }}>
       <div className="navbar-left">
         <button className="icon-btn hamburger-btn" onClick={() => setIsSidebarOpen(true)}>
           <Menu size={20} />
@@ -44,26 +73,114 @@ export default function Navbar({
         </div>
       </div>
 
-      <div className="navbar-search">
+      <div className="navbar-search" style={{ position: "relative" }}>
         <Search className="icon" />
         <input
-          placeholder="Search products or bills…"
-          value={
-            activeTab === "billing" || activeTab === "products"
-              ? productQuery
-              : activeTab === "history" ? historyQuery
-              : activeTab === "customers" ? customerQuery
-              : activeTab === "purchases" ? purchaseQuery
-              : ""
-          }
-          onChange={(e) => {
-            const v = e.target.value;
-            if (activeTab === "history") setHistoryQuery(v);
-            else if (activeTab === "customers") setCustomerQuery(v);
-            else if (activeTab === "purchases") setPurchaseQuery(v);
-            else setProductQuery(v);
-          }}
+          placeholder="Global Search (products, customers, bills)…"
+          value={globalQuery}
+          onChange={(e) => setGlobalQuery(e.target.value)}
         />
+        {globalQuery && (
+          <button
+            onClick={() => setGlobalQuery("")}
+            style={{
+              position: "absolute",
+              right: "10px",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--text-tertiary)",
+              display: "flex",
+              alignItems: "center"
+            }}
+          >
+            <X size={15} />
+          </button>
+        )}
+
+        {/* Global Search Dropdown */}
+        {globalQuery && (
+          <div className="search-results-dropdown" style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+            background: "var(--bg-secondary)",
+            border: "1px solid var(--border-color)",
+            borderRadius: "12px",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+            zIndex: 999,
+            maxHeight: "350px",
+            overflowY: "auto",
+            marginTop: "6px",
+            padding: "8px"
+          }}>
+            {searchProducts.length > 0 && (
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-tertiary)", padding: "4px 8px", borderBottom: "1px solid var(--border-color)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Products</div>
+                {searchProducts.slice(0, 4).map(p => (
+                  <div key={p.id} className="search-result-item" onClick={() => {
+                    setProductQuery(p.name);
+                    setActiveTab("products");
+                    setGlobalQuery("");
+                  }} style={{ padding: "8px", borderRadius: "8px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: "13px", color: "var(--text-primary)" }}>{p.name}</div>
+                      <div style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{p.category} · Stock: {p.stock}</div>
+                    </div>
+                    <div style={{ fontWeight: 700, color: "var(--brand-primary)", fontSize: "13px" }}>₹{p.selling_price}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {searchCustomers.length > 0 && (
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-tertiary)", padding: "4px 8px", borderBottom: "1px solid var(--border-color)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Customers</div>
+                {searchCustomers.slice(0, 4).map(c => (
+                  <div key={c.id} className="search-result-item" onClick={() => {
+                    setCustomerQuery(c.name);
+                    setActiveTab("customers");
+                    setGlobalQuery("");
+                  }} style={{ padding: "8px", borderRadius: "8px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: "13px", color: "var(--text-primary)" }}>{c.name}</div>
+                      <div style={{ fontSize: "11px", color: "var(--text-secondary)" }}>Phone: {c.phone}</div>
+                    </div>
+                    {c.outstanding_balance > 0 && (
+                      <div style={{ fontSize: "12px", color: "var(--warning)", fontWeight: 600 }}>Due: ₹{c.outstanding_balance}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {searchSales.length > 0 && (
+              <div style={{ marginBottom: "4px" }}>
+                <div style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-tertiary)", padding: "4px 8px", borderBottom: "1px solid var(--border-color)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Bills</div>
+                {searchSales.slice(0, 4).map(s => (
+                  <div key={s.id} className="search-result-item" onClick={() => {
+                    setHistoryQuery(s.bill_number);
+                    setActiveTab("history");
+                    setGlobalQuery("");
+                  }} style={{ padding: "8px", borderRadius: "8px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: "13px", color: "var(--text-primary)" }}>{s.bill_number}</div>
+                      <div style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{new Date(s.created_at).toLocaleDateString()}</div>
+                    </div>
+                    <div style={{ fontWeight: 700, color: "var(--success)", fontSize: "13px" }}>₹{s.total_amount}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!hasSearchResults && (
+              <div style={{ padding: "16px", textAlign: "center", color: "var(--text-secondary)", fontSize: "13px" }}>
+                No results found for "{globalQuery}"
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="navbar-right">
@@ -78,56 +195,53 @@ export default function Navbar({
 
           {isNotifOpen && (
             <div className="notif-dropdown">
-              <div className="notif-header">
+              <div className="notif-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <strong>Notifications</strong>
-                {notifCount > 0 && <span className="badge badge-danger">{notifCount} alerts</span>}
-              </div>
-
-              {lowStockList.length > 0 && (
-                <div className="notif-section">
-                  <div className="notif-section-title">⚠️ Stock Alerts</div>
-                  {lowStockList.slice(0, 5).map((item) => (
-                    <div key={item.id} className="notif-item">
-                      <div className="notif-item-icon" style={{ background: "#fee2e2", color: "#dc2626" }}>
-                        <AlertCircle size={14} />
-                      </div>
-                      <div className="notif-item-content">
-                        <div className="notif-item-title">{item.name}</div>
-                        <div className="notif-item-sub">
-                          {item.stock === 0 ? "Out of stock" : `Only ${item.stock} left`}
-                        </div>
-                      </div>
-                      <span className={`badge ${item.stock === 0 ? "badge-danger" : "badge-warning"}`}>
-                        {item.stock === 0 ? "Critical" : "Low"}
-                      </span>
-                    </div>
-                  ))}
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {notifCount > 0 && (
+                    <button className="btn btn-ghost btn-sm" style={{ fontSize: "11px", padding: "2px 6px" }} onClick={() => markAllNotifsRead(notifications)}>
+                      Mark all read
+                    </button>
+                  )}
+                  {notifCount > 0 && <span className="badge badge-danger">{notifCount} unread</span>}
                 </div>
-              )}
-
-              <div className="notif-section">
-                <div className="notif-section-title">🕐 Recent Activity</div>
-                {mockActivityFeed.map((activity) => {
-                  const cfg = activityConfig[activity.type] || activityConfig.bill;
-                  return (
-                    <div key={activity.id} className="notif-item">
-                      <div className="notif-item-icon" style={{ background: cfg.bg, color: cfg.color }}>
-                        <cfg.icon size={14} />
-                      </div>
-                      <div className="notif-item-content">
-                        <div className="notif-item-title">{activity.title}</div>
-                        <div className="notif-item-sub">{activity.time}</div>
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
 
-              {lowStockList.length > 0 && (
-                <div className="notif-footer">
-                  <button className="btn btn-ghost btn-sm" onClick={() => { setActiveTab("products"); setIsNotifOpen(false); }}>
-                    View all stock alerts <ArrowRight size={14} />
-                  </button>
+              {notifications.length > 0 ? (
+                <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                  {notifications.slice(0, 15).map((n) => {
+                    const isRead = readNotifIds.includes(n.id);
+                    const cfg = activityConfig[n.type] || activityConfig.alert;
+                    return (
+                      <div
+                        key={n.id}
+                        className={`notif-item ${isRead ? "read" : "unread"}`}
+                        onClick={() => handleNotificationClick(n)}
+                        style={{
+                          opacity: isRead ? 0.65 : 1,
+                          backgroundColor: isRead ? "transparent" : "var(--brand-primary-soft)",
+                          cursor: "pointer",
+                          transition: "all 0.2s"
+                        }}
+                      >
+                        <div className="notif-item-icon" style={{ background: cfg.bg, color: cfg.color }}>
+                          <cfg.icon size={14} />
+                        </div>
+                        <div className="notif-item-content">
+                          <div className="notif-item-title" style={{ fontWeight: isRead ? 500 : 700 }}>{n.title}</div>
+                          <div className="notif-item-sub">{n.sub}</div>
+                          <div className="notif-item-time" style={{ fontSize: "10px", marginTop: "2px", color: "var(--text-tertiary)" }}>{n.time}</div>
+                        </div>
+                        {!isRead && (
+                          <span className="notif-dot" style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--brand-primary)", alignSelf: "center", flexShrink: 0 }} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ padding: "20px", textAlign: "center", color: "var(--text-tertiary)", fontSize: "13px" }}>
+                  No notifications yet.
                 </div>
               )}
             </div>
@@ -153,7 +267,7 @@ export default function Navbar({
               <button className="dropdown-item" onClick={() => { setActiveTab("settings"); setIsProfileOpen(false); }}>
                 <Settings className="icon" /><span>Store Settings</span>
               </button>
-              <button className="dropdown-item text-danger">
+              <button className="dropdown-item text-danger" onClick={() => { setIsProfileOpen(false); handleLogout(); }}>
                 <LogOut className="icon" /><span>Log out</span>
               </button>
             </div>

@@ -1,10 +1,23 @@
 {
-  "users": [],
+  "users": [
+    {
+      "name": "Amit Sharma ",
+      "email": "you@example.com",
+      "password": "Hello",
+      "id": "8e58a224-d002-452d-97cf-de0563fc61bf"
+    }
+  ],
   "store": {
-    "store_name": "Shree Kirana Mart",
-    "owner_name": "Amit Sharma",
-    "phone": "9876543210",
-    "store_category": "Kirana Store"
+    "store_name": "Shop Store",
+    "owner_name": "Amit Sharma ",
+    "phone": "9812028014",
+    "store_category": "Grocery Store",
+    "gst_number": null,
+    "business_address": null,
+    "receipt_prefix": null,
+    "receipt_footer": null,
+    "logo_data_url": null,
+    "theme_color": "navy"
   },
   "products": [
     {
@@ -14,7 +27,8 @@
       "category": "Grocery",
       "cost_price": 205,
       "selling_price": 245,
-      "stock": 32
+      "stock": 32,
+      "unit": "Piece"
     },
     {
       "id": "fc228b9f-14b0-4676-9976-06d79141e728",
@@ -23,16 +37,18 @@
       "category": "Dairy",
       "cost_price": 58,
       "selling_price": 66,
-      "stock": 72
+      "stock": 72,
+      "unit": "Piece"
     },
     {
       "id": "f09a5305-9d1c-42f5-aec9-2c494f10cee2",
       "name": "Classmate Notebook 172 pages",
       "barcode": "8902519001123",
       "category": "Stationery",
-      "cost_price": 48,
-      "selling_price": 65,
-      "stock": 7
+      "cost_price": 48.0,
+      "selling_price": 65.0,
+      "stock": 20,
+      "unit": "Piece"
     },
     {
       "id": "26634ae9-3c8b-4b8e-b54c-dd3845542393",
@@ -41,7 +57,8 @@
       "category": "Snacks",
       "cost_price": 42,
       "selling_price": 50,
-      "stock": 56
+      "stock": 56,
+      "unit": "Piece"
     },
     {
       "id": "e7e3826a-9888-42fc-972b-56da9f0ef8a4",
@@ -50,7 +67,19 @@
       "category": "Grocery",
       "cost_price": 22,
       "selling_price": 28,
-      "stock": 52
+      "stock": 52,
+      "unit": "Piece"
+    },
+    {
+      "id": "8572ecee-b1a4-4105-a6b0-4f66c090158f",
+      "name": "Apple",
+      "barcode": "101250873908",
+      "category": "Fruit",
+      "cost_price": 50.0,
+      "selling_price": 80.0,
+      "stock": 50,
+      "unit": "Kg",
+      "variable_price": true
     }
   ],
   "sales": [
@@ -215,7 +244,16 @@
       "total_profit": 18
     }
   ],
-  "customers": [],
+  "customers": [
+    {
+      "id": "b56f03e5-e9bf-4cee-b377-63e54c364d6a",
+      "created_at": "2026-06-12T05:14:46.393472+00:00",
+      "name": "Riya",
+      "phone": "9811834641",
+      "email": "jansidoshi4@gmail.com",
+      "address": "Manipal"
+    }
+  ],
   "udhaar": [],
   "purchases": [
     {

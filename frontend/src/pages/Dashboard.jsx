@@ -9,17 +9,8 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import StatCard from "../components/StatCard";
+import AskHisaabAI from "../components/AskHisaabAI";
 import { fmt, safeNum } from "../services/api";
-
-const mockChartData = [
-  { name: "Mon", sales: 4000, profit: 1200, orders: 40 },
-  { name: "Tue", sales: 3000, profit: 900,  orders: 32 },
-  { name: "Wed", sales: 5000, profit: 1500, orders: 55 },
-  { name: "Thu", sales: 2780, profit: 800,  orders: 28 },
-  { name: "Fri", sales: 6890, profit: 2100, orders: 75 },
-  { name: "Sat", sales: 8390, profit: 2500, orders: 90 },
-  { name: "Sun", sales: 7490, profit: 2300, orders: 82 },
-];
 
 const DONUT_COLORS = ["#10b981", "#f59e0b", "#ef4444"];
 
@@ -30,33 +21,58 @@ const activityConfig = {
   alert:   { bg: "#fee2e2", color: "#dc2626", icon: AlertCircle },
 };
 
-const mockActivityFeed = [
-  { id: 1, type: "bill",    title: "Bill #1042 created",       time: "10 mins ago" },
-  { id: 2, type: "stock",   title: "Stock updated: Parle-G",   time: "1 hour ago" },
-  { id: 3, type: "payment", title: "Payment received ₹450",    time: "2 hours ago" },
-  { id: 4, type: "alert",   title: "Low stock: Amul Butter",   time: "3 hours ago" },
-];
-
 function getStockSeverity(stock) {
   if (stock === 0) return { label: "Critical", cls: "badge-danger" };
   if (stock <= 5)  return { label: "High",     cls: "badge-danger" };
   return                  { label: "Low",      cls: "badge-warning" };
 }
 
-export default function Dashboard({ store, dashboard, sales, setActiveTab, setEditingProduct, setEditingCustomer, chartTab, setChartTab }) {
+export default function Dashboard({ store, dashboard, sales, setActiveTab, setEditingProduct, setEditingCustomer, setEditingPurchase, chartTab, setChartTab }) {
   const todayStr    = new Date().toDateString();
   const todaysSales = sales.filter((s) => new Date(s.created_at).toDateString() === todayStr);
   const ordersToday = todaysSales.length;
   const avgBillValue = ordersToday > 0 ? safeNum(dashboard?.today_sales) / ordersToday : 0;
 
-  const totalProducts  = safeNum(dashboard.total_products);
-  const lowStockList   = dashboard.low_stock_products || [];
+  const totalProducts  = safeNum(dashboard?.total_products);
+  const lowStockList   = dashboard?.low_stock_products || [];
   const outOfStockCnt  = lowStockList.filter((p) => p.stock === 0).length;
   const lowStockCnt    = lowStockList.filter((p) => p.stock > 0).length;
   const healthyCnt     = Math.max(0, totalProducts - lowStockList.length);
   const healthPct      = totalProducts > 0 ? Math.round((healthyCnt / totalProducts) * 100) : 100;
 
   const barColor = chartTab === "profit" ? "var(--success)" : chartTab === "orders" ? "#8b5cf6" : "var(--brand-primary)";
+
+  // Build real weekly chart data from sales
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const now = new Date();
+  const weekChartData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (6 - i));
+    const dateStr = d.toDateString();
+    const daySales = sales.filter(s => new Date(s.created_at).toDateString() === dateStr);
+    return {
+      name: dayNames[d.getDay()],
+      sales: daySales.reduce((sum, s) => sum + safeNum(s.total_amount), 0),
+      profit: daySales.reduce((sum, s) => sum + safeNum(s.total_profit), 0),
+      orders: daySales.length,
+    };
+  });
+  const hasChartData = weekChartData.some(d => d.sales > 0 || d.orders > 0);
+
+  // Build real activity feed from recent sales
+  function timeAgo(dateStr) {
+    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+    if (diff < 60) return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  }
+  const recentActivity = sales.slice(0, 5).map(s => ({
+    id: s.id,
+    type: "bill",
+    title: `${s.bill_number} — ${fmt(s.total_amount)}`,
+    time: timeAgo(s.created_at),
+  }));
 
   function CustomTooltip({ active, payload, label }) {
     if (!active || !payload?.length) return null;
@@ -84,9 +100,9 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
 
       {/* KPI Grid */}
       <div className="kpi-grid" style={{ marginBottom: "24px" }}>
-        <StatCard title="Today's Sales" icon={Receipt} value={fmt(dashboard.today_sales)} trend="up" trendValue="+12% vs yday" colorClass="kpi-icon-primary" sub={`${ordersToday} orders placed`} />
-        <StatCard title="Today's Profit" icon={TrendingUp} value={fmt(dashboard.today_profit)} trend="up" trendValue="+8% vs yday" colorClass="kpi-icon-success" sub={`${dashboard.today_sales > 0 ? Math.round((dashboard.today_profit / dashboard.today_sales) * 100) : 0}% margin`} />
-        <StatCard title="Monthly Revenue" icon={CalendarDays} value={fmt(safeNum(dashboard.today_sales) * 25)} trend="up" trendValue="+15% vs last mo" colorClass="kpi-icon-primary" sub="Projected estimate" />
+        <StatCard title="Today's Sales" icon={Receipt} value={fmt(dashboard.today_sales)} trend={safeNum(dashboard.today_sales) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.today_sales) > 0 ? "Sales today" : "No sales yet"} colorClass="kpi-icon-primary" sub={`${ordersToday} orders placed`} />
+        <StatCard title="Today's Profit" icon={TrendingUp} value={fmt(dashboard.today_profit)} trend={safeNum(dashboard.today_profit) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.today_profit) > 0 ? "Earning today" : "No profit yet"} colorClass="kpi-icon-success" sub={`${dashboard.today_sales > 0 ? Math.round((dashboard.today_profit / dashboard.today_sales) * 100) : 0}% margin`} />
+        <StatCard title="Monthly Revenue" icon={CalendarDays} value={fmt(safeNum(dashboard.monthly_sales))} trend={safeNum(dashboard.monthly_sales) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.monthly_sales) > 0 ? "This month" : "No revenue yet"} colorClass="kpi-icon-primary" sub="Current month" />
         <StatCard title="Orders Today" icon={ShoppingCart} value={ordersToday} trend={ordersToday > 0 ? "up" : "neutral"} trendValue={ordersToday > 0 ? "Active today" : "No orders yet"} colorClass="kpi-icon-primary" sub="Bills generated" />
         <StatCard title="Avg Bill Value" icon={BarChart2} value={fmt(avgBillValue)} trend="neutral" trendValue="Per transaction" colorClass="kpi-icon-success" sub={`Based on ${ordersToday} order${ordersToday !== 1 ? "s" : ""}`} />
         <StatCard title="Best Seller" icon={Star} value={dashboard.top_selling_products[0]?.name || "—"} trend="up" trendValue="Top product today" colorClass="kpi-icon-warning" sub={dashboard.top_selling_products[0] ? `${safeNum(dashboard.top_selling_products[0].quantity)} units sold` : "No sales yet"} isText />
@@ -110,17 +126,25 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
             </div>
             <div className="card-body">
               <div style={{ height: "280px" }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={mockChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} barSize={30}>
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--text-secondary)" }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--text-secondary)" }}
-                      tickFormatter={(v) => chartTab === "orders" ? v : `₹${(v / 1000).toFixed(0)}k`}
-                    />
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
-                    <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--bg-tertiary)", radius: 4 }} />
-                    <Bar dataKey={chartTab} fill={barColor} radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {hasChartData ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={weekChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} barSize={30}>
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--text-secondary)" }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--text-secondary)" }}
+                        tickFormatter={(v) => chartTab === "orders" ? v : `₹${(v / 1000).toFixed(0)}k`}
+                      />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
+                      <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--bg-tertiary)", radius: 4 }} />
+                      <Bar dataKey={chartTab} fill={barColor} radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: "12px" }}>
+                    <BarChart2 size={48} color="var(--text-tertiary)" />
+                    <p style={{ margin: 0, fontSize: "14px", color: "var(--text-secondary)", fontWeight: 500 }}>No sales data this week</p>
+                    <p style={{ margin: 0, fontSize: "12px", color: "var(--text-tertiary)" }}>Start billing to see your analytics here</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -170,6 +194,9 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
 
         {/* Side column */}
         <div className="dashboard-side-col">
+          {/* Ask Hisaab AI */}
+          <AskHisaabAI />
+
           {/* Quick Actions */}
           <div className="card">
             <div className="card-header"><h3 className="card-title">Quick Actions</h3></div>
@@ -181,8 +208,8 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
                 <button className="action-btn" onClick={() => { setEditingProduct({}); setActiveTab("products"); }}>
                   <Plus size={22} color="var(--brand-primary)" /> Add Product
                 </button>
-                <button className="action-btn" onClick={() => setActiveTab("products")}>
-                  <Package size={22} color="var(--brand-primary)" /> Manage Products
+                <button className="action-btn" onClick={() => { setEditingPurchase({}); setActiveTab("purchases"); }}>
+                  <Truck size={22} color="var(--brand-primary)" /> Record Purchase
                 </button>
                 <button className="action-btn" onClick={() => { setEditingCustomer({}); setActiveTab("customers"); }}>
                   <Plus size={22} color="var(--brand-primary)" /> Add Customer
@@ -248,7 +275,7 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
             </div>
             <div className="card-body">
               <div className="activity-feed">
-                {mockActivityFeed.map((act) => {
+                {recentActivity.length > 0 ? recentActivity.map((act) => {
                   const cfg = activityConfig[act.type] || activityConfig.bill;
                   return (
                     <div className="activity-item" key={act.id}>
@@ -259,7 +286,12 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
                       </div>
                     </div>
                   );
-                })}
+                }) : (
+                  <div style={{ textAlign: "center", padding: "16px 0" }}>
+                    <Clock size={28} color="var(--text-tertiary)" style={{ marginBottom: "8px" }} />
+                    <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)" }}>No recent activity yet</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

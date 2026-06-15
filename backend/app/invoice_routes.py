@@ -11,7 +11,7 @@ import os
 import base64
 import json
 import httpx
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Header, Query
 from pydantic import BaseModel
 from typing import Optional
 from dotenv import load_dotenv
@@ -25,20 +25,26 @@ OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 INVOICE_MODEL = "google/gemini-2.5-flash"  # Vision-capable model
 
 EXTRACTION_PROMPT = """Analyze this supplier invoice image.
-Extract all inventory items and quantities.
+Extract all inventory items with their details.
 
 Rules:
 - Return ONLY valid JSON. No explanation. No markdown. No backticks.
 - Normalize product names into short inventory-friendly names (e.g., "Amul Butter 500g", "Surf Excel 1kg").
 - If quantity is unclear, set quantity to null.
+- Identify the category for each product. Use common Indian retail categories like: "Fruits & Vegetables", "Dairy & Eggs", "Grains & Pulses", "Snacks & Beverages", "Spices & Condiments", "Personal Care", "Household", "Cooking Oil", "Bakery", "Frozen Foods", "Other".
+- Extract the cost price (purchase price per unit) from the invoice if visible. Look for columns like "Rate", "Price", "MRP", "Unit Price", etc.
+- If selling price is visible (like MRP), extract it. If not visible, estimate selling price as cost_price * 1.2 (20% markup). If cost price is also not visible, set both to null.
 - Ignore totals, taxes, invoice numbers, addresses, and other metadata.
-- Focus only on products and quantities.
+- Focus only on products, quantities, categories, and prices.
 
 Return format:
 [
   {
     "product": "Product Name",
-    "quantity": 0
+    "quantity": 0,
+    "category": "Category Name",
+    "cost_price": 0.00,
+    "selling_price": 0.00
   }
 ]"""
 
@@ -46,6 +52,9 @@ Return format:
 class InvoiceItem(BaseModel):
     product: str
     quantity: Optional[int]
+    category: Optional[str] = None
+    cost_price: Optional[float] = None
+    selling_price: Optional[float] = None
 
 
 class ExtractionResult(BaseModel):
@@ -81,7 +90,7 @@ async def call_openrouter_with_image(image_b64: str, media_type: str) -> str:
                 ],
             }
         ],
-        "max_tokens": 2000,
+        "max_tokens": 4000,
         "temperature": 0,  # Deterministic for structured extraction
     }
 
@@ -144,18 +153,36 @@ def parse_items(raw: str) -> list[InvoiceItem]:
     for entry in data:
         if not isinstance(entry, dict) or "product" not in entry:
             continue
+        cost = entry.get("cost_price")
+        sell = entry.get("selling_price")
+        try:
+            cost = float(cost) if cost is not None else None
+        except (ValueError, TypeError):
+            cost = None
+        try:
+            sell = float(sell) if sell is not None else None
+        except (ValueError, TypeError):
+            sell = None
         items.append(
             InvoiceItem(
                 product=str(entry["product"]).strip(),
                 quantity=entry.get("quantity"),
+                category=str(entry.get("category", "")).strip() or None,
+                cost_price=cost,
+                selling_price=sell,
             )
         )
 
     return items
 
 
+def get_user_id_dep(authorization: Optional[str] = Header(default=None), token: Optional[str] = Query(default=None)) -> str:
+    from app.main import get_current_user_id
+    return get_current_user_id(authorization, token)
+
+
 @router.post("/extract", response_model=ExtractionResult)
-async def extract_invoice(file: UploadFile = File(...)):
+async def extract_invoice(file: UploadFile = File(...), user_id: str = Depends(get_user_id_dep)):
     """
     Upload a supplier invoice image (JPEG/PNG/PDF screenshot).
     Returns extracted products + quantities as structured JSON.

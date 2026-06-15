@@ -9,6 +9,10 @@ function getInitials(name = "") {
   return (name || "").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
 }
 
+function limitPhoneDigits(e) {
+  e.currentTarget.value = e.currentTarget.value.replace(/\D/g, "").slice(0, 10);
+}
+
 export default function Customers({
   filteredCustomers, editingCustomer, setEditingCustomer,
   saveCustomer, deleteCustomer, loadCustomerDetail,
@@ -114,7 +118,16 @@ export default function Customers({
                     </div>
                     <div className="form-group">
                       <label className="form-label">Phone</label>
-                      <input className="form-input" required name="phone" defaultValue={editingCustomer.phone} />
+                      <input
+                        className="form-input"
+                        required
+                        name="phone"
+                        defaultValue={editingCustomer.phone}
+                        inputMode="numeric"
+                        maxLength={10}
+                        pattern="[0-9]{10}"
+                        onInput={limitPhoneDigits}
+                      />
                     </div>
                   </div>
                   <div className="form-row">
@@ -195,7 +208,15 @@ export default function Customers({
                     </div>
                     <div className="form-group">
                       <label className="form-label">Phone Number</label>
-                      <input className="form-input" required name="phone" />
+                      <input
+                        className="form-input"
+                        required
+                        name="phone"
+                        inputMode="numeric"
+                        maxLength={10}
+                        pattern="[0-9]{10}"
+                        onInput={limitPhoneDigits}
+                      />
                     </div>
                   </div>
                   <div className="form-row">

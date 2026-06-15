@@ -5,9 +5,11 @@ import {
   Hexagon, Plus, Receipt, History as HistoryIcon, Settings,
   Download, FileText, AlertCircle, CheckCircle2,
   Users, Truck, ChevronLeft, IndianRupee, Phone, Mail, MapPin,
+  MessageCircle, Lock, ArrowRight, Store, ImagePlus, Check, LogOut, Menu,
+  Barcode, Brain, TrendingUp, Wallet, Sparkles, AlertTriangle, Eye, ShieldCheck, Palette
 } from "lucide-react";
 
-import { api, fmt, safeNum, downloadInvoice, printInvoice } from "./services/api";
+import { api, fmt, safeNum, downloadInvoice, printInvoice, openWhatsAppReceipt, supabase } from "./services/api";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
@@ -15,6 +17,7 @@ import Billing from "./pages/Billing";
 import Inventory from "./pages/Inventory";
 import Customers from "./pages/Customers";
 import Purchases from "./pages/Purchases";
+import SettingsPage from "./pages/Settings";
 
 /** Return 1–2 uppercase initials from a full name */
 function getInitials(name = "") {
@@ -26,20 +29,115 @@ function getInitials(name = "") {
     .toUpperCase() || "U";
 }
 
+const themeVars = {
+  light: {
+    primary: "#3b82f6",
+    hover: "#2563eb",
+    soft: "#eff6ff",
+    bgPrimary: "#f9fafb",
+    bgSecondary: "#ffffff",
+    bgTertiary: "#f3f4f6",
+    textPrimary: "#111827",
+    textSecondary: "#4b5563",
+    textTertiary: "#9ca3af",
+    sidebarBg: "#ffffff",
+    sidebarBgHover: "#f4f4f5",
+    sidebarBgActive: "#eff6ff",
+    sidebarText: "#4b5563",
+    sidebarTextActive: "#3b82f6",
+    sidebarBorder: "#e4e4e7",
+    borderColor: "#e4e4e7",
+    borderColorHover: "#d4d4d8",
+  },
+  dark: {
+    primary: "#3b82f6",
+    hover: "#2563eb",
+    soft: "rgba(59, 130, 246, 0.15)",
+    bgPrimary: "#000000",
+    bgSecondary: "#121212",
+    bgTertiary: "#1c1c1c",
+    textPrimary: "#ffffff",
+    textSecondary: "#a1a1aa",
+    textTertiary: "#71717a",
+    sidebarBg: "#121212",
+    sidebarBgHover: "#1c1c1c",
+    sidebarBgActive: "rgba(59, 130, 246, 0.15)",
+    sidebarText: "#a1a1aa",
+    sidebarTextActive: "#3b82f6",
+    sidebarBorder: "#27272a",
+    borderColor: "#27272a",
+    borderColorHover: "#3f3f46",
+  },
+};
+
+function applyTheme(theme = "light") {
+  const selected = themeVars[theme] || themeVars.light;
+  const root = document.documentElement;
+  root.style.setProperty("--brand-primary", selected.primary);
+  root.style.setProperty("--brand-primary-hover", selected.hover);
+  root.style.setProperty("--brand-primary-soft", selected.soft);
+  root.style.setProperty("--bg-primary", selected.bgPrimary);
+  root.style.setProperty("--bg-secondary", selected.bgSecondary);
+  root.style.setProperty("--bg-tertiary", selected.bgTertiary);
+  root.style.setProperty("--text-primary", selected.textPrimary);
+  root.style.setProperty("--text-secondary", selected.textSecondary);
+  root.style.setProperty("--text-tertiary", selected.textTertiary);
+  root.style.setProperty("--sidebar-bg", selected.sidebarBg);
+  root.style.setProperty("--sidebar-bg-hover", selected.sidebarBgHover);
+  root.style.setProperty("--sidebar-bg-active", selected.sidebarBgActive);
+  root.style.setProperty("--sidebar-text", selected.sidebarText);
+  root.style.setProperty("--sidebar-text-active", selected.sidebarTextActive);
+  root.style.setProperty("--sidebar-border", selected.sidebarBorder);
+  root.style.setProperty("--border-color", selected.borderColor);
+  root.style.setProperty("--border-color-hover", selected.borderColorHover);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // App
 // ─────────────────────────────────────────────────────────────────────────────
 function App() {
-  const [activeTab,        setActiveTab]        = useState("landing");
+  if (!supabase) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', backgroundColor: '#f9fafb', color: '#111827', padding: '20px', textAlign: 'center' }}>
+        <div style={{ padding: '15px', borderRadius: '50%', backgroundColor: '#fef3c7', color: '#d97706', marginBottom: '20px' }}>
+          <AlertTriangle size={48} />
+        </div>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '10px' }}>Supabase Configuration Required</h2>
+        <p style={{ maxWidth: '500px', color: '#4b5563', lineHeight: '1.5', marginBottom: '20px' }}>
+          Hisaab POS requires Supabase environment variables to run. Please create a <code>.env</code> file in your <code>frontend/</code> folder with the following variables:
+        </p>
+        <pre style={{ backgroundColor: '#f3f4f6', padding: '15px', borderRadius: '8px', textAlign: 'left', fontSize: '0.9rem', border: '1px solid #e5e7eb', width: '100%', maxWidth: '480px', overflowX: 'auto' }}>
+{`VITE_SUPABASE_URL=your-supabase-project-url
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
+        </pre>
+      </div>
+    );
+  }
+
+  const [currentUser, setCurrentUser] = useState(null);
+
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace("#", "");
+    const validTabs = ["landing", "signin", "signup", "forgot-password", "reset-password", "onboarding", "dashboard", "billing", "products", "udhaar", "history", "analytics", "purchases", "settings"];
+    return (hash && validTabs.includes(hash)) ? hash : "landing";
+  });
+
+  const [appLoading, setAppLoading] = useState(true);
+
   const [chartTab,         setChartTab]         = useState("sales");
   const [store,            setStore]            = useState(null);
   const [products,         setProducts]         = useState([]);
   const [sales,            setSales]            = useState([]);
-  const [dashboard,        setDashboard]        = useState(null);
+  const [dashboard,        setDashboard]        = useState({ total_products: 0, low_stock_products: [], top_selling_products: [], today_sales: 0, today_profit: 0, weekly_sales: 0, monthly_sales: 0, total_customers: 0, total_udhaar_outstanding: 0, recent_purchases: [], recent_udhaar: [] });
   const [cart,             setCart]             = useState([]);
   const [productQuery,     setProductQuery]     = useState("");
   const [historyQuery,     setHistoryQuery]     = useState("");
+  const [historyDateFilter, setHistoryDateFilter] = useState("all");
+  const [historyStartDate, setHistoryStartDate] = useState("");
+  const [historyEndDate, setHistoryEndDate] = useState("");
+  const [historyPaymentFilter, setHistoryPaymentFilter] = useState("all");
   const [editingProduct,   setEditingProduct]   = useState(null);
+  const [pendingBarcodeCart, setPendingBarcodeCart] = useState(null);
   const [notice,           setNotice]           = useState(null);
   const [scannerOn,        setScannerOn]        = useState(false);
   const [isProfileOpen,    setIsProfileOpen]    = useState(false);
@@ -54,7 +152,118 @@ function App() {
   const [editingPurchase,  setEditingPurchase]  = useState(null);
   const [purchaseQuery,    setPurchaseQuery]    = useState("");
   const [billCustomerId,   setBillCustomerId]   = useState("");
+  const [paymentMethod,    setPaymentMethod]    = useState("Cash");
+  const [lastSale,         setLastSale]         = useState(null);
   const [udhaarForm,       setUdhaarForm]       = useState(null);
+
+  const [readNotifIds, setReadNotifIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("hisaab_read_notifs") || "[]");
+    } catch { return []; }
+  });
+
+  const markNotifRead = (id) => {
+    setReadNotifIds(prev => {
+      const next = prev.includes(id) ? prev : [...prev, id];
+      localStorage.setItem("hisaab_read_notifs", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const markAllNotifsRead = (notifs) => {
+    const allIds = notifs.map(n => n.id);
+    setReadNotifIds(allIds);
+    localStorage.setItem("hisaab_read_notifs", JSON.stringify(allIds));
+  };
+
+  function timeAgo(dateStr) {
+    if (!dateStr) return "Some time ago";
+    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+    if (diff < 60) return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  }
+
+  const getNotifications = () => {
+    const list = [];
+    const LOW_STOCK_THRESHOLD = 10;
+    
+    // 1. Low stock alerts
+    (products || []).forEach(p => {
+      if (p.stock <= LOW_STOCK_THRESHOLD) {
+        list.push({
+          id: `stock-${p.id}-${p.stock}`,
+          type: "alert",
+          title: `Low stock: ${p.name}`,
+          sub: p.stock === 0 ? "Out of stock!" : `Only ${p.stock} left`,
+          time: p.stock === 0 ? "Critical" : "Warning",
+          tab: "products",
+          query: p.name,
+          rawTime: new Date(0)
+        });
+      }
+    });
+
+    // 2. Sales activity
+    (sales || []).slice(0, 10).forEach(s => {
+      list.push({
+        id: `sale-${s.id}`,
+        type: "bill",
+        title: `Sale: ${s.bill_number}`,
+        sub: `₹${s.total_amount} via ${s.payment_method}`,
+        time: timeAgo(s.created_at),
+        tab: "history",
+        query: s.bill_number,
+        rawTime: new Date(s.created_at)
+      });
+    });
+
+    // 3. Udhaar activity
+    (dashboard?.recent_udhaar || []).forEach(u => {
+      list.push({
+        id: `udhaar-${u.id}`,
+        type: "payment",
+        title: u.type === "credit" ? "Udhaar Created" : "Udhaar Paid",
+        sub: `₹${u.amount} · ${u.customer_name || "Customer"}`,
+        time: timeAgo(u.created_at),
+        tab: "customers",
+        query: u.customer_name,
+        rawTime: new Date(u.created_at)
+      });
+    });
+
+    // 4. Purchase activity
+    (purchases || []).slice(0, 10).forEach(p => {
+      list.push({
+        id: `purchase-${p.id}`,
+        type: "stock",
+        title: `Restocked ${p.product_name || "Product"}`,
+        sub: `+${p.quantity} units from ${p.supplier_name}`,
+        time: timeAgo(p.created_at),
+        tab: "purchases",
+        query: p.product_name,
+        rawTime: new Date(p.created_at)
+      });
+    });
+
+    return list.sort((a, b) => b.rawTime - a.rawTime);
+  };
+
+  // SaaS Auth & Onboarding States
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+
+  // Store Onboarding Form State
+  const [onboardStoreName, setOnboardStoreName] = useState("");
+  const [onboardOwnerName, setOnboardOwnerName] = useState("");
+  const [onboardPhone, setOnboardPhone] = useState("");
+  const [onboardCategory, setOnboardCategory] = useState("Grocery Store");
+  const [onboardLogo, setOnboardLogo] = useState("");
 
   const profileRef     = useRef(null);
   const notifRef       = useRef(null);
@@ -76,6 +285,7 @@ function App() {
     setDashboard(dashboardData);
     setCustomers(customerData);
     setPurchases(purchaseData);
+    return storeData;
   }
 
   useEffect(() => {
@@ -85,16 +295,65 @@ function App() {
     return () => document.head.removeChild(style);
   }, []);
 
+  // Handle Supabase Auth Session and Route Protection
   useEffect(() => {
-    refresh().catch((err) => showNotice(err.message, "error"));
+    // 1. Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setCurrentUser(session.user);
+        refresh()
+          .then((storeData) => {
+            if ((!storeData || !storeData.store_name) && !["landing", "signin", "signup", "forgot-password", "reset-password"].includes(activeTab)) {
+              setActiveTab("onboarding");
+            }
+          })
+          .catch((err) => showNotice(err.message, "error"))
+          .finally(() => setAppLoading(false));
+      } else {
+        setCurrentUser(null);
+        setAppLoading(false);
+      }
+    });
+
+    // 2. Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setCurrentUser(session.user);
+        refresh().catch((err) => console.error("Initial load failed:", err));
+      } else {
+        setCurrentUser(null);
+        // If logged out or session expired, redirect to signin/landing
+        const publicTabs = ["landing", "signin", "signup", "forgot-password", "reset-password"];
+        if (!publicTabs.includes(activeTab)) {
+          setActiveTab("landing");
+          showNotice("Session expired or signed out. Please log in.", "error");
+        }
+      }
+    });
 
     function handleClickOutside(e) {
       if (profileRef.current && !profileRef.current.contains(e.target)) setIsProfileOpen(false);
       if (notifRef.current   && !notifRef.current.contains(e.target))   setIsNotifOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      subscription.unsubscribe();
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
+
+  // Protected Route Guard
+  useEffect(() => {
+    const protectedTabs = ["dashboard", "billing", "products", "udhaar", "history", "analytics", "purchases", "settings", "onboarding"];
+    if (!appLoading && !currentUser && protectedTabs.includes(activeTab)) {
+      setActiveTab("signin");
+    }
+  }, [currentUser, activeTab, appLoading]);
+
+  useEffect(() => {
+    if (store?.theme_color) applyTheme(store.theme_color);
+  }, [store?.theme_color]);
 
   useEffect(() => {
     function handleGlobalKeyDown(e) {
@@ -110,11 +369,7 @@ function App() {
         barcodeBuffer.current = "";
         const found = products.find(p => p.barcode === val);
         if (found) {
-          setCart((cur) => {
-            const ex = cur.find((l) => l.product_id === found.id);
-            if (ex) return cur.map((l) => l.product_id === found.id ? { ...l, quantity: Math.min(l.quantity + 1, found.stock) } : l);
-            return [...cur, { product_id: found.id, quantity: 1 }];
-          });
+          addProductToCart(found);
           showNotice(`Added ${found.name} to cart`);
         } else {
           showNotice(`Barcode ${val} not found`, "error");
@@ -124,6 +379,26 @@ function App() {
     document.addEventListener("keydown", handleGlobalKeyDown);
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
   }, [activeTab, products]);
+  useEffect(() => {
+    function handleHashChange() {
+      const hash = window.location.hash.replace("#", "");
+      const validTabs = ["landing", "signin", "signup", "forgot-password", "reset-password", "onboarding", "dashboard", "billing", "products", "udhaar", "history", "analytics", "purchases", "settings"];
+      if (hash && validTabs.includes(hash)) {
+        setActiveTab(hash);
+      } else if (!hash) {
+        setActiveTab("landing");
+      }
+    }
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    if (window.location.hash.replace("#", "") !== activeTab) {
+      window.location.hash = activeTab;
+    }
+  }, [activeTab]);
+
 
   function showNotice(msg, type = "success") {
     setNotice({ message: msg, type });
@@ -132,17 +407,61 @@ function App() {
 
   const filteredProducts = useMemo(() => {
     const q = productQuery.toLowerCase();
-    return products.filter((p) =>
-      `${p.name} ${p.barcode || ""} ${p.category}`.toLowerCase().includes(q),
-    );
+    const seen = new Set();
+    return products.filter((p) => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return `${p.name} ${p.barcode || ""} ${p.category}`.toLowerCase().includes(q);
+    });
   }, [products, productQuery]);
 
   const filteredSales = useMemo(() => {
-    const q = historyQuery.toLowerCase();
-    return sales.filter((s) =>
-      `${s.bill_number} ${s.created_at} ${s.items.map((i) => i.name).join(" ")}`.toLowerCase().includes(q),
-    );
-  }, [sales, historyQuery]);
+    let list = sales;
+
+    // Search query filter
+    if (historyQuery.trim()) {
+      const q = historyQuery.toLowerCase();
+      list = list.filter((s) =>
+        `${s.bill_number} ${s.items.map((i) => i.name).join(" ")}`.toLowerCase().includes(q)
+      );
+    }
+
+    // Payment method filter
+    if (historyPaymentFilter !== "all") {
+      list = list.filter((s) => {
+        const method = s.payment_method || "Cash";
+        return method.toLowerCase() === historyPaymentFilter.toLowerCase();
+      });
+    }
+
+    // Date filter
+    const now = new Date();
+    if (historyDateFilter === "today") {
+      const todayStr = now.toDateString();
+      list = list.filter((s) => new Date(s.created_at).toDateString() === todayStr);
+    } else if (historyDateFilter === "week") {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(now.getDate() - 7);
+      list = list.filter((s) => new Date(s.created_at) >= sevenDaysAgo);
+    } else if (historyDateFilter === "month") {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(now.getDate() - 30);
+      list = list.filter((s) => new Date(s.created_at) >= thirtyDaysAgo);
+    } else if (historyDateFilter === "custom") {
+      if (historyStartDate) {
+        const start = new Date(historyStartDate);
+        start.setHours(0,0,0,0);
+        list = list.filter((s) => new Date(s.created_at) >= start);
+      }
+      if (historyEndDate) {
+        const end = new Date(historyEndDate);
+        end.setHours(23,59,59,999);
+        list = list.filter((s) => new Date(s.created_at) <= end);
+      }
+    }
+
+    return list;
+  }, [sales, historyQuery, historyDateFilter, historyStartDate, historyEndDate, historyPaymentFilter]);
 
   const filteredCustomers = useMemo(() => {
     const q = customerQuery.toLowerCase();
@@ -160,15 +479,35 @@ function App() {
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
+  function findCustomer(customerId) {
+    return customers.find((customer) => customer.id === customerId);
+  }
+
+  function shareReceipt(sale) {
+    openWhatsAppReceipt(sale, store, findCustomer(sale.customer_id));
+  }
+
   async function completeSale(doPrint = false) {
     if (cart.length === 0) return;
+    if (paymentMethod === "Udhaar" && !billCustomerId) {
+      showNotice("Select a customer before creating an udhaar bill", "error");
+      return;
+    }
     try {
-      const sale = await api(`/sales${billCustomerId ? `?customer_id=${billCustomerId}` : ""}`, {
+      const params = new URLSearchParams({ payment_method: paymentMethod });
+      if (billCustomerId) params.set("customer_id", billCustomerId);
+      const sale = await api(`/sales?${params.toString()}`, {
         method: "POST",
-        body: JSON.stringify(cart),
+        body: JSON.stringify(cart.map((line) => ({
+          product_id: line.product_id,
+          quantity: line.quantity,
+          ...(line.override_price != null ? { override_price: line.override_price } : {}),
+        }))),
       });
       setCart([]);
+      setLastSale(sale);
       setBillCustomerId("");
+      setPaymentMethod("Cash");
       showNotice(`${sale.bill_number} generated for ${fmt(sale.total_amount)}`);
       if (doPrint) printInvoice(sale.id);
       await refresh();
@@ -185,6 +524,249 @@ function App() {
     } catch (err) { showNotice(err.message, "error"); }
   }
 
+  async function handleLogin(e) {
+    e.preventDefault();
+    if (!authEmail || !authPassword) {
+      setAuthError("Email and password are required.");
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: authEmail.toLowerCase(),
+        password: authPassword,
+      });
+      if (error) throw error;
+      
+      showNotice("Welcome back!");
+      
+      // Load all user data (including store settings, products, sales, etc.)
+      const storeData = await refresh();
+      
+      // If store is unconfigured/empty, go to onboarding, else dashboard
+      if (!storeData || !storeData.store_name) {
+        setActiveTab("onboarding");
+      } else {
+        setActiveTab("dashboard");
+      }
+      
+      // Clear fields
+      setAuthEmail("");
+      setAuthPassword("");
+      setAuthName("");
+    } catch (err) {
+      setAuthError(err.message || "Invalid credentials. Please try again.");
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function handleRegister(e) {
+    e.preventDefault();
+    if (!authName || !authEmail || !authPassword) {
+      setAuthError("All fields are required.");
+      return;
+    }
+    if (authPassword.length < 4) {
+      setAuthError("Password must be at least 4 characters long.");
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: authEmail.toLowerCase(),
+        password: authPassword,
+        options: {
+          data: {
+            name: authName
+          }
+        }
+      });
+      if (error) throw error;
+      
+      showNotice("Registration successful! Let's set up your store.");
+      
+      // Set default owner name from registration name
+      setOnboardOwnerName(authName);
+      
+      // Go to onboarding
+      setActiveTab("onboarding");
+      
+      // Clear fields
+      setAuthEmail("");
+      setAuthPassword("");
+      setAuthName("");
+    } catch (err) {
+      setAuthError(err.message || "Registration failed. Email might be in use.");
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function handleGoogleLogin() {
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      setAuthError(err.message || "Google login failed.");
+      setAuthLoading(false);
+    }
+  }
+
+  async function handleForgotPassword(e) {
+    e.preventDefault();
+    if (!authEmail) {
+      setAuthError("Email is required to reset password.");
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(authEmail, {
+        redirectTo: `${window.location.origin}/#reset-password`
+      });
+      if (error) throw error;
+      setResetEmailSent(true);
+      showNotice("Password reset link sent to your email!");
+    } catch (err) {
+      setAuthError(err.message || "Failed to send reset link.");
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function handleResetPassword(e) {
+    e.preventDefault();
+    if (!authPassword) {
+      setAuthError("New password is required.");
+      return;
+    }
+    if (authPassword.length < 4) {
+      setAuthError("Password must be at least 4 characters long.");
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError("");
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: authPassword
+      });
+      if (error) throw error;
+      showNotice("Password reset successful! Please log in.");
+      setActiveTab("signin");
+      setAuthPassword("");
+    } catch (err) {
+      setAuthError(err.message || "Failed to reset password.");
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+    setCurrentUser(null);
+    setStore(null);
+    setProducts([]);
+    setSales([]);
+    setDashboard({
+      total_products: 0,
+      low_stock_products: [],
+      top_selling_products: [],
+      today_sales: 0,
+      today_profit: 0,
+      weekly_sales: 0,
+      monthly_sales: 0,
+      total_customers: 0,
+      total_udhaar_outstanding: 0,
+      recent_purchases: [],
+      recent_udhaar: []
+    });
+    setCart([]);
+    setProductQuery("");
+    setHistoryQuery("");
+    setCustomers([]);
+    setSelectedCustomer(null);
+    setCustomerQuery("");
+    setCustomerUdhaar([]);
+    setPurchases([]);
+    setBillCustomerId("");
+    setPaymentMethod("Cash");
+    setLastSale(null);
+    setUdhaarForm(null);
+
+    // Reset onboarding form inputs
+    setOnboardStoreName("");
+    setOnboardOwnerName("");
+    setOnboardPhone("");
+    setOnboardCategory("Grocery Store");
+    setOnboardLogo("");
+
+    showNotice("You have logged out successfully.");
+    setActiveTab("landing");
+  }
+
+  async function handleOnboard(e) {
+    e.preventDefault();
+    if (!onboardStoreName || !onboardOwnerName || !onboardPhone) {
+      showNotice("Please fill in all required fields", "error");
+      return;
+    }
+    try {
+      const payload = {
+        store_name: onboardStoreName,
+        owner_name: onboardOwnerName,
+        phone: onboardPhone,
+        store_category: onboardCategory,
+        logo_data_url: onboardLogo || null,
+        theme_color: "navy"
+      };
+      const saved = await api("/store", {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      setStore(saved);
+      setActiveTab("dashboard");
+      showNotice("Store onboarded successfully!");
+      refresh().catch(() => {});
+    } catch (err) {
+      showNotice(err.message, "error");
+    }
+  }
+
+  useEffect(() => {
+    if (!editingProduct && pendingBarcodeCart) {
+      setPendingBarcodeCart(null);
+    }
+  }, [editingProduct]);
+
+  function addProductToCart(product) {
+    setCart((cur) => {
+      const ex = cur.find((l) => l.product_id === product.id);
+      const inCart = ex ? ex.quantity : 0;
+      if (product.stock - inCart <= 0) {
+        showNotice("Product out of stock!", "error");
+        return cur;
+      }
+      if (ex) return cur.map((l) => l.product_id === product.id ? { ...l, quantity: Math.min(l.quantity + 1, product.stock) } : l);
+      const newLine = { product_id: product.id, quantity: 1 };
+      if (product.variable_price) newLine.override_price = product.selling_price;
+      return [...cur, newLine];
+    });
+  }
+
   async function saveProduct(e) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -192,37 +774,44 @@ function App() {
     const payload = {
       name: raw.name, barcode: raw.barcode || null, category: raw.category,
       cost_price: Number(raw.cost_price), selling_price: Number(raw.selling_price), stock: Number(raw.stock),
+      unit: raw.unit || "Piece",
+      variable_price: raw.variable_price === "on",
     };
-    const path   = editingProduct ? `/products/${editingProduct.id}` : "/products";
-    const method = editingProduct ? "PUT" : "POST";
+    const path   = editingProduct?.id ? `/products/${editingProduct.id}` : "/products";
+    const method = editingProduct?.id ? "PUT" : "POST";
     try {
-      await api(path, { method, body: JSON.stringify(payload) });
+      const saved = await api(path, { method, body: JSON.stringify(payload) });
       form.reset();
       setEditingProduct(null);
       showNotice("Product saved successfully");
       await refresh();
+      if (pendingBarcodeCart && saved?.barcode === pendingBarcodeCart) {
+        addProductToCart(saved);
+        showNotice(`${saved.name} added to cart`);
+        setPendingBarcodeCart(null);
+        setActiveTab("billing");
+      }
     } catch (err) { showNotice(err.message, "error"); }
   }
 
-  async function deleteProduct(productId) {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
-    try {
-      await api(`/products/${productId}`, { method: "DELETE" });
-      setCart((cur) => cur.filter((l) => l.product_id !== productId));
-      showNotice("Product deleted");
-      await refresh();
-    } catch (err) { showNotice(err.message, "error"); }
+  function startCreateProductWithBarcode(barcode) {
+    setEditingProduct({ barcode });
+    setPendingBarcodeCart(barcode);
+    setActiveTab("products");
   }
+
+
 
   async function saveCustomer(e) {
     e.preventDefault();
-    const raw = Object.fromEntries(new FormData(e.currentTarget));
+    const form = e.currentTarget;
+    const raw = Object.fromEntries(new FormData(form));
     const payload = { name: raw.name, phone: raw.phone, email: raw.email || null, address: raw.address || null };
     const path   = editingCustomer?.id ? `/customers/${editingCustomer.id}` : "/customers";
     const method = editingCustomer?.id ? "PUT" : "POST";
     try {
       await api(path, { method, body: JSON.stringify(payload) });
-      e.currentTarget.reset();
+      form.reset();
       setEditingCustomer(null);
       showNotice("Customer saved successfully");
       await refresh();
@@ -270,7 +859,8 @@ function App() {
 
   async function savePurchase(e) {
     e.preventDefault();
-    const raw = Object.fromEntries(new FormData(e.currentTarget));
+    const form = e.currentTarget;
+    const raw = Object.fromEntries(new FormData(form));
     const payload = {
       product_id: raw.product_id,
       supplier_name: raw.supplier_name,
@@ -280,54 +870,465 @@ function App() {
     };
     try {
       await api("/purchases", { method: "POST", body: JSON.stringify(payload) });
-      e.currentTarget.reset();
+      form.reset();
       setEditingPurchase(null);
       showNotice("Purchase recorded — stock updated");
       await refresh();
     } catch (err) { showNotice(err.message, "error"); }
   }
 
-  // ── Loading ──────────────────────────────────────────────────────────────────
-  if (!store || !dashboard) {
+  // ── SaaS Views Render Helpers ───────────────────────────────────────────────
+  
+  function renderLanding() {
     return (
-      <main className="loading-screen">
-        <div className="spinner" />
-        <span style={{ color: "var(--brand-primary)", fontWeight: 600 }}>Loading Hisaab…</span>
-      </main>
-    );
-  }
-
-  const lowStockList = dashboard.low_stock_products || [];
-
-  // ── Landing page ─────────────────────────────────────────────────────────────
-  if (activeTab === "landing") {
-    return (
-      <div className="landing-page">
-        <header className="landing-header">
-          <div className="brand">
-            <div className="brand-icon"><Hexagon size={18} strokeWidth={3} /></div>
+      <div className="saas-landing">
+        <header className="saas-header">
+          <div className="saas-brand" onClick={() => setActiveTab("landing")}>
+            <Hexagon className="saas-brand-icon" size={24} strokeWidth={2.5} />
             <span>Hisaab</span>
           </div>
-          <button className="btn btn-secondary" onClick={() => setActiveTab("dashboard")}>Try demo</button>
-        </header>
-        <main className="landing-main">
-          <div className="landing-hero">
-            <div className="hero-image-wrapper">
-              <img src="/hero-box.png" alt="Inventory Box" width="280" style={{ mixBlendMode: "multiply" }} />
-            </div>
-            <h1 className="hero-title">The inventory platform that<br />scales your business</h1>
-            <p className="hero-subtitle">
-              Track stock, manage suppliers, automate reorders, and keep<br />
-              your team aligned from one powerful command center.
-            </p>
-            <button className="btn btn-primary btn-lg try-demo-btn" onClick={() => setActiveTab("dashboard")}>
-              Try demo &rarr;
-            </button>
+          <nav className="saas-nav">
+            <a href="#features">Features</a>
+          </nav>
+          <div className="saas-header-actions">
+            {currentUser ? (
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <span style={{ fontSize: "14px", color: "var(--text-muted)", display: "none" }} className="header-user-email">{currentUser.email}</span>
+                <button className="lp-btn-secondary" onClick={handleLogout}>Sign Out</button>
+                <button className="lp-btn-primary" onClick={() => setActiveTab("dashboard")}>Go to Dashboard</button>
+              </div>
+            ) : (
+              <>
+                <button className="lp-btn-secondary" onClick={() => { setAuthError(""); setActiveTab("signin"); }}>Sign In</button>
+                <button className="lp-btn-primary" onClick={() => { setAuthError(""); setActiveTab("signup"); }}>Get Started</button>
+              </>
+            )}
           </div>
-        </main>
+        </header>
+
+        <section className="saas-hero">
+          <div className="hero-content">
+            <div className="hero-badge"><Sparkles size={14} /> The #1 Retail POS Command Center</div>
+            <h1 className="hero-title">
+              The smart way to run your <span className="gradient-text">retail business</span>
+            </h1>
+            <p className="hero-subtitle">
+              Hisaab is a premium, cloud-hosted POS platform designed to automate billing, manage real-time inventory, scan barcodes, analyze sales, and track credit ledgers (Udhaar).
+            </p>
+            <div className="hero-actions">
+              {currentUser ? (
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <button className="lp-btn-primary lp-btn-lg" onClick={() => setActiveTab("dashboard")}>
+                    Go to Dashboard <ArrowRight size={18} />
+                  </button>
+                  <button className="lp-btn-secondary lp-btn-lg" onClick={handleLogout}>
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button className="lp-btn-primary lp-btn-lg" onClick={() => { setAuthError(""); setActiveTab("signup"); }}>
+                    Get Started Free <ArrowRight size={18} />
+                  </button>
+                  <button className="lp-btn-secondary lp-btn-lg" onClick={() => { setAuthError(""); setActiveTab("signin"); }}>
+                    Sign In to POS
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="hero-preview-container">
+            <div className="hero-dashboard-mock">
+              <div className="mock-window-header">
+                <div className="mock-dots"><span/><span/><span/></div>
+                <div className="mock-url">app.hisaab.io/dashboard</div>
+              </div>
+              <div className="mock-dashboard-content">
+                <div className="mock-sidebar">
+                  <div className="mock-logo"><Hexagon size={16} /> Hisaab</div>
+                  <div className="mock-nav-item active">Dashboard</div>
+                  <div className="mock-nav-item">Billing</div>
+                  <div className="mock-nav-item">Products</div>
+                  <div className="mock-nav-item">Udhaar</div>
+                </div>
+                <div className="mock-main">
+                  <div className="mock-metrics">
+                    <div className="mock-card"><h4>Sales Today</h4><strong>₹28,450</strong><span className="trend">+14%</span></div>
+                    <div className="mock-card"><h4>Transactions</h4><strong>124</strong><span className="trend">+8%</span></div>
+                    <div className="mock-card"><h4>Low Stock Alerts</h4><strong>3 Products</strong><span className="trend-down">Critical</span></div>
+                  </div>
+                  <div className="mock-table">
+                    <div className="mock-table-row header"><span>Bill #</span><span>Items</span><span>Total</span></div>
+                    <div className="mock-table-row"><span>BILL-00042</span><span>Atta, Milk, Salt</span><span>₹368.00</span></div>
+                    <div className="mock-table-row"><span>BILL-00041</span><span>Classmate Notebook x2</span><span>₹130.00</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="features" className="saas-features">
+          <div className="section-header">
+            <h2>Everything you need to grow your retail store</h2>
+            <p>Ditch paper ledgers and complex software. Hisaab puts all your shop operations in one premium command center.</p>
+          </div>
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon"><Receipt size={24} /></div>
+              <h3>Lightning Fast Billing</h3>
+              <p>Generate digital receipts in seconds. Print thermal receipts or share instantly with customers via WhatsApp.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon"><Barcode size={24} /></div>
+              <h3>Barcode Scanner</h3>
+              <p>Add items to cart instantly using your built-in webcam scanner or any external laser scanner.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon"><Brain size={24} /></div>
+              <h3>AI OCR Supplier Invoices</h3>
+              <p>Upload a photo of your supplier invoice and watch our vision AI automatically extract and insert new products into your inventory.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon"><Wallet size={24} /></div>
+              <h3>Digital Udhaar Book</h3>
+              <p>Keep track of customer credit balances, log payments, and view outstanding credit balances at a glance.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon"><TrendingUp size={24} /></div>
+              <h3>Analytics Dashboard</h3>
+              <p>Identify best-selling products, monitor net margins, and track sales performance with real-time graphs.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon"><Store size={24} /></div>
+              <h3>Multi-Store Ready</h3>
+              <p>Configure store branding, receipt footers, prefixes, and customize experience to match your unique brand identity.</p>
+            </div>
+          </div>
+        </section>
+
+
+
+        <footer className="saas-footer">
+          <div className="footer-content">
+            <div className="saas-brand">
+              <Hexagon size={18} />
+              <span>Hisaab</span>
+            </div>
+            <p>&copy; 2026 Hisaab POS Inc. All rights reserved. Designed for modern retailers.</p>
+          </div>
+        </footer>
       </div>
     );
   }
+
+  function renderAuth() {
+    const isLogin = activeTab === "signin";
+    const isRegister = activeTab === "signup";
+    const isForgotPassword = activeTab === "forgot-password";
+    const isResetPassword = activeTab === "reset-password";
+
+    return (
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-logo" onClick={() => setActiveTab("landing")}>
+            <Hexagon size={28} strokeWidth={2.5} />
+            <span>Hisaab</span>
+          </div>
+
+          <h2>
+            {isLogin && "Sign in to your account"}
+            {isRegister && "Create your free account"}
+            {isForgotPassword && "Reset your password"}
+            {isResetPassword && "Set a new password"}
+          </h2>
+          <p className="auth-subtitle">
+            {isLogin && "Welcome back! Enter your credentials to access the dashboard."}
+            {isRegister && "Get started with unlimited billing and inventory management."}
+            {isForgotPassword && "We'll send you a link to reset your password."}
+            {isResetPassword && "Enter your new password below."}
+          </p>
+
+          {authError && (
+            <div className="auth-alert">
+              <AlertTriangle size={16} />
+              <span>{authError}</span>
+            </div>
+          )}
+
+          {isForgotPassword && resetEmailSent ? (
+            <div className="auth-success-message" style={{ textAlign: "center", padding: "1rem 0" }}>
+              <div style={{ display: "inline-flex", padding: "0.75rem", borderRadius: "50%", backgroundColor: "rgba(16, 185, 129, 0.15)", marginBottom: "1rem" }}>
+                <CheckCircle2 size={32} color="#10b981" />
+              </div>
+              <h3 style={{ fontSize: "1.2rem", fontWeight: "bold", marginBottom: "0.5rem" }}>Email Sent!</h3>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginBottom: "1.5rem" }}>Please check your inbox for the password reset link.</p>
+              <button className="btn btn-secondary btn-block" onClick={() => { setResetEmailSent(false); setActiveTab("signin"); }}>
+                Back to Sign In
+              </button>
+            </div>
+          ) : (
+            <>
+              <form 
+                onSubmit={
+                  isLogin ? handleLogin : 
+                  isRegister ? handleRegister : 
+                  isForgotPassword ? handleForgotPassword : 
+                  handleResetPassword
+                } 
+                className="auth-form"
+              >
+                {isRegister && (
+                  <div className="form-group">
+                    <label className="form-label">Full Name</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Amit Sharma"
+                      value={authName}
+                      onChange={(e) => setAuthName(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+
+                {!isResetPassword && (
+                  <div className="form-group">
+                    <label className="form-label">Email Address</label>
+                    <input
+                      type="email"
+                      className="form-input"
+                      placeholder="you@example.com"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+
+                {(isLogin || isRegister || isResetPassword) && (
+                  <div className="form-group">
+                    <div className="form-label-wrapper" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label className="form-label">{isResetPassword ? "New Password" : "Password"}</label>
+                      {isLogin && (
+                        <button 
+                          type="button" 
+                          className="auth-link-btn" 
+                          style={{ fontSize: '0.8rem', background: 'none', border: 'none', color: 'var(--brand-primary)', cursor: 'pointer', padding: 0 }}
+                          onClick={() => { setAuthError(""); setActiveTab("forgot-password"); }}
+                        >
+                          Forgot Password?
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="password"
+                      className="form-input"
+                      placeholder="••••••••"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
+
+                <button type="submit" className="btn btn-primary btn-block auth-submit" disabled={authLoading}>
+                  {authLoading ? <div className="spinner-sm" /> : (
+                    isLogin ? "Sign In" : 
+                    isRegister ? "Register Account" : 
+                    isForgotPassword ? "Send Reset Link" : 
+                    "Reset Password"
+                  )}
+                </button>
+              </form>
+
+              {(isLogin || isRegister) && (
+                <>
+                  <div className="auth-divider" style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0' }}>
+                    <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }}></div>
+                    <span style={{ padding: '0 0.75rem', fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>or</span>
+                    <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }}></div>
+                  </div>
+
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary btn-block google-login-btn"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    onClick={handleGoogleLogin}
+                    disabled={authLoading}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 18 18">
+                      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A9 9 0 0 0 9 18z" fill="#34A853"/>
+                      <path d="M3.964 10.707c-.18-.54-.282-1.119-.282-1.707s.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+                      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.896 11.426 0 9 0A9 9 0 0 0 .957 4.961l3.007 2.332C4.672 5.164 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                    </svg>
+                    <span>Continue with Google</span>
+                  </button>
+                </>
+              )}
+
+              <div className="auth-toggle" style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem' }}>
+                {isLogin && (
+                  <span>Don't have an account? <button style={{ background: 'none', border: 'none', color: 'var(--brand-primary)', cursor: 'pointer', padding: 0, fontWeight: 'bold' }} onClick={() => { setAuthError(""); setActiveTab("signup"); }}>Sign Up</button></span>
+                )}
+                {isRegister && (
+                  <span>Already have an account? <button style={{ background: 'none', border: 'none', color: 'var(--brand-primary)', cursor: 'pointer', padding: 0, fontWeight: 'bold' }} onClick={() => { setAuthError(""); setActiveTab("signin"); }}>Sign In</button></span>
+                )}
+                {(isForgotPassword || isResetPassword) && (
+                  <button style={{ background: 'none', border: 'none', color: 'var(--brand-primary)', cursor: 'pointer', padding: 0, fontWeight: 'bold' }} onClick={() => { setAuthError(""); setActiveTab("signin"); }}>Back to Sign In</button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  function renderOnboarding() {
+    function handleOnboardLogoChange(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (!file.type.startsWith("image/")) {
+        showNotice("Please upload an image file", "error");
+        return;
+      }
+      if (file.size > 1024 * 1024) {
+        showNotice("Logo must be under 1 MB", "error");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => setOnboardLogo(reader.result);
+      reader.onerror = () => showNotice("Could not read logo file", "error");
+      reader.readAsDataURL(file);
+    }
+
+    return (
+      <div className="onboard-container">
+        <div className="onboard-card">
+          <div className="onboard-logo">
+            <Hexagon size={28} strokeWidth={2.5} />
+            <span>Hisaab</span>
+          </div>
+          <h2>Set up your shop profile</h2>
+          <p className="onboard-subtitle">Customize your store billing details. You can change these anytime in settings.</p>
+
+          <form onSubmit={handleOnboard} className="onboard-form">
+            <div className="onboard-grid">
+              <div className="onboard-logo-section">
+                <div className="logo-uploader">
+                  <div className="logo-preview">
+                    {onboardLogo ? (
+                      <img src={onboardLogo} alt="Logo" />
+                    ) : (
+                      <Hexagon size={36} strokeWidth={1.5} style={{ color: "var(--brand-primary)" }} />
+                    )}
+                  </div>
+                  <label className="btn btn-secondary btn-sm">
+                    <ImagePlus size={15} /> Upload Logo
+                    <input type="file" accept="image/*" onChange={handleOnboardLogoChange} />
+                  </label>
+                </div>
+              </div>
+
+              <div className="onboard-fields-section">
+                <div className="form-group">
+                  <label className="form-label">Store Name *</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Sharma Kirana Mart"
+                    value={onboardStoreName}
+                    onChange={(e) => setOnboardStoreName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Owner Name *</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Amit Sharma"
+                    value={onboardOwnerName}
+                    onChange={(e) => setOnboardOwnerName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Owner Phone Number *</label>
+                  <input
+                    type="tel"
+                    className="form-input"
+                    placeholder="10-digit number"
+                    value={onboardPhone}
+                    onChange={(e) => setOnboardPhone(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Store Category *</label>
+                  <select
+                    className="form-input"
+                    value={onboardCategory}
+                    onChange={(e) => setOnboardCategory(e.target.value)}
+                    required
+                  >
+                    <option value="Grocery Store">Grocery / Kirana Store</option>
+                    <option value="Apparel & Clothing">Apparel & Clothing Store</option>
+                    <option value="Electronics & Mobile">Electronics & Mobile Shop</option>
+                    <option value="Pharmacy & Healthcare">Pharmacy & Healthcare</option>
+                    <option value="Restaurant / Cafe">Restaurant / Cafe</option>
+                    <option value="Hardware & Tools">Hardware & Tools</option>
+                    <option value="Other Retail">Other Retail Business</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-block onboard-submit">
+              Complete Setup &amp; Access Dashboard
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Loading ──────────────────────────────────────────────────────────────────
+  const isAuthView = ["landing", "signin", "signup", "onboarding"].includes(activeTab);
+  
+  // Route Guards
+  if (!currentUser && !["landing", "signin", "signup"].includes(activeTab)) {
+    return renderLanding();
+  }
+
+  if (appLoading && currentUser && !["landing", "signin", "signup"].includes(activeTab)) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", flexDirection: "column", gap: "16px" }}>
+        <div style={{ width: "40px", height: "40px", border: "3px solid var(--border)", borderTopColor: "var(--primary)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <span style={{ color: "var(--text-muted)", fontSize: "14px" }}>Loading your store…</span>
+      </div>
+    );
+  }
+
+  if (currentUser && (!store || !store.store_name) && !["landing", "signin", "signup", "onboarding"].includes(activeTab)) {
+    return renderOnboarding();
+  }
+
+  if (activeTab === "landing") {
+    return renderLanding();
+  }
+
+  if (activeTab === "signin" || activeTab === "signup") {
+    return renderAuth();
+  }
+
+  if (activeTab === "onboarding") {
+    return renderOnboarding();
+  }
+
+  const lowStockList = dashboard?.low_stock_products || [];
 
   // ── Main App Shell ────────────────────────────────────────────────────────────
   return (
@@ -358,6 +1359,14 @@ function App() {
           isProfileOpen={isProfileOpen} setIsProfileOpen={setIsProfileOpen} profileRef={profileRef}
           setIsSidebarOpen={setIsSidebarOpen}
           getInitials={getInitials}
+          handleLogout={handleLogout}
+          products={products}
+          customers={customers}
+          sales={sales}
+          notifications={getNotifications()}
+          readNotifIds={readNotifIds}
+          markNotifRead={markNotifRead}
+          markAllNotifsRead={markAllNotifsRead}
         />
 
         <main className="page-content">
@@ -370,6 +1379,7 @@ function App() {
               setActiveTab={setActiveTab}
               setEditingProduct={setEditingProduct}
               setEditingCustomer={setEditingCustomer}
+              setEditingPurchase={setEditingPurchase}
               chartTab={chartTab}
               setChartTab={setChartTab}
             />
@@ -384,22 +1394,37 @@ function App() {
               customers={customers}
               billCustomerId={billCustomerId}
               setBillCustomerId={setBillCustomerId}
+              paymentMethod={paymentMethod}
+              setPaymentMethod={setPaymentMethod}
+              lastSale={lastSale}
               productQuery={productQuery}
               setProductQuery={setProductQuery}
               scannerOn={scannerOn}
               setScannerOn={setScannerOn}
               showNotice={showNotice}
               completeSale={completeSale}
+              shareReceipt={shareReceipt}
+              api={api}
+              refresh={refresh}
+              addProductToCart={addProductToCart}
+              startCreateProductWithBarcode={startCreateProductWithBarcode}
+              store={store}
             />
           )}
 
           {activeTab === "products" && (
             <Inventory
+              products={products}
               filteredProducts={filteredProducts}
               editingProduct={editingProduct}
               setEditingProduct={setEditingProduct}
               saveProduct={saveProduct}
-              deleteProduct={deleteProduct}
+              setProducts={setProducts}
+              setCart={setCart}
+              store={store}
+              showNotice={showNotice}
+              api={api}
+              refresh={refresh}
             />
           )}
 
@@ -432,14 +1457,119 @@ function App() {
             />
           )}
 
-          {/* ── History ─────────────────────────────────────────── */}
           {activeTab === "history" && (
             <div className="fade-in">
               <div className="page-header">
                 <h2 className="page-title">Transaction History</h2>
               </div>
+
+              {/* Filter controls */}
+              <div style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "12px",
+                marginBottom: "20px",
+                alignItems: "center",
+                background: "var(--bg-secondary)",
+                padding: "12px 16px",
+                borderRadius: "12px",
+                border: "1px solid var(--border-color)"
+              }}>
+                <div className="form-group" style={{ margin: 0, minWidth: "140px" }}>
+                  <label className="form-label" style={{ fontSize: "11px", marginBottom: "4px" }}>Date Filter</label>
+                  <select
+                    className="form-input"
+                    value={historyDateFilter}
+                    onChange={(e) => setHistoryDateFilter(e.target.value)}
+                    style={{ padding: "6px 10px", fontSize: "13px" }}
+                  >
+                    <option value="all">All Dates</option>
+                    <option value="today">Today</option>
+                    <option value="week">Past Week</option>
+                    <option value="month">Past Month</option>
+                    <option value="custom">Custom Range</option>
+                  </select>
+                </div>
+
+                {historyDateFilter === "custom" && (
+                  <>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: "11px", marginBottom: "4px" }}>Start Date</label>
+                      <input
+                        type="date"
+                        className="form-input"
+                        value={historyStartDate}
+                        onChange={(e) => setHistoryStartDate(e.target.value)}
+                        style={{ padding: "5px 10px", fontSize: "13px" }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontSize: "11px", marginBottom: "4px" }}>End Date</label>
+                      <input
+                        type="date"
+                        className="form-input"
+                        value={historyEndDate}
+                        onChange={(e) => setHistoryEndDate(e.target.value)}
+                        style={{ padding: "5px 10px", fontSize: "13px" }}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="form-group" style={{ margin: 0, minWidth: "150px" }}>
+                  <label className="form-label" style={{ fontSize: "11px", marginBottom: "4px" }}>Payment Method</label>
+                  <select
+                    className="form-input"
+                    value={historyPaymentFilter}
+                    onChange={(e) => setHistoryPaymentFilter(e.target.value)}
+                    style={{ padding: "6px 10px", fontSize: "13px" }}
+                  >
+                    <option value="all">All Methods</option>
+                    <option value="Cash">Cash</option>
+                    <option value="UPI">UPI</option>
+                    <option value="Card">Card</option>
+                    <option value="Udhaar">Udhaar</option>
+                  </select>
+                </div>
+
+                {(historyDateFilter !== "all" || historyPaymentFilter !== "all") && (
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => {
+                      setHistoryDateFilter("all");
+                      setHistoryPaymentFilter("all");
+                      setHistoryStartDate("");
+                      setHistoryEndDate("");
+                    }}
+                    style={{ marginTop: "16px", padding: "6px 10px", fontSize: "12px" }}
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+
               <div className="card">
-                {filteredSales.length > 0 ? (
+                {sales.length === 0 ? (
+                  <div className="empty-state-v2">
+                    <div className="empty-state-v2-icon"><HistoryIcon size={48} /></div>
+                    <h3 className="empty-state-v2-title">No transactions yet</h3>
+                    <p className="empty-state-v2-desc">Start billing to see your transaction history here.</p>
+                    <button className="btn btn-primary btn-sm" onClick={() => setActiveTab("billing")}>Start Billing</button>
+                  </div>
+                ) : filteredSales.length === 0 ? (
+                  <div className="empty-state-v2">
+                    <div className="empty-state-v2-icon"><HistoryIcon size={48} /></div>
+                    <h3 className="empty-state-v2-title">No matching transactions</h3>
+                    <p className="empty-state-v2-desc">Try clearing your filters or search query.</p>
+                    <button className="btn btn-secondary btn-sm" onClick={() => {
+                      setHistoryQuery("");
+                      setHistoryDateFilter("all");
+                      setHistoryPaymentFilter("all");
+                      setHistoryStartDate("");
+                      setHistoryEndDate("");
+                    }}>Clear Filters</button>
+                  </div>
+                ) : (
                   <div className="table-container">
                     <table className="table">
                       <thead>
@@ -459,7 +1589,9 @@ function App() {
                                 <div className="product-icon"><Receipt size={20} /></div>
                                 <div className="product-details">
                                   <strong>{sale.bill_number}</strong>
-                                  <small style={{ color: "var(--success)" }}>✓ Success</small>
+                                  <small style={{ color: sale.payment_method === "Udhaar" ? "var(--warning)" : "var(--success)" }}>
+                                    {sale.payment_method || "Cash"}
+                                  </small>
                                 </div>
                               </div>
                             </td>
@@ -487,19 +1619,15 @@ function App() {
                                 <button className="btn btn-ghost btn-sm" onClick={() => printInvoice(sale.id)} title="Print">
                                   <FileText size={14} />
                                 </button>
+                                <button className="btn btn-ghost btn-sm" onClick={() => shareReceipt(sale)} title="Share via WhatsApp">
+                                  <MessageCircle size={14} />
+                                </button>
                               </div>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                  </div>
-                ) : (
-                  <div className="empty-state-v2">
-                    <div className="empty-state-v2-icon"><HistoryIcon size={48} /></div>
-                    <h3 className="empty-state-v2-title">No transactions yet</h3>
-                    <p className="empty-state-v2-desc">Start billing to see your transaction history here.</p>
-                    <button className="btn btn-primary btn-sm" onClick={() => setActiveTab("billing")}>Start Billing</button>
                   </div>
                 )}
               </div>
@@ -508,49 +1636,16 @@ function App() {
 
           {/* ── Settings ─────────────────────────────────────────── */}
           {activeTab === "settings" && (
-            <div className="fade-in settings-container">
-              <div className="page-header">
-                <h2 className="page-title">Store Settings</h2>
-              </div>
-              <div className="card">
-                <div className="card-header">
-                  <h3 className="card-title">Store Profile</h3>
-                </div>
-                <div className="card-body">
-                  <form onSubmit={saveStore}>
-                    <div className="form-group">
-                      <label className="form-label">Store Name</label>
-                      <input className="form-input" required name="store_name" defaultValue={store.store_name} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Owner Name</label>
-                      <input className="form-input" required name="owner_name" defaultValue={store.owner_name} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Phone Number</label>
-                      <input className="form-input" required name="phone" defaultValue={store.phone} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Store Category</label>
-                      <select className="form-input" required name="store_category" defaultValue={store.store_category}>
-                        <option>Kirana Store</option>
-                        <option>Stationery Shop</option>
-                        <option>General Retail</option>
-                        <option>Pharmacy</option>
-                        <option>Supermarket</option>
-                        <option>Electronics</option>
-                        <option>Other</option>
-                      </select>
-                    </div>
-                    <div style={{ marginTop: "24px" }}>
-                      <button type="submit" className="btn btn-primary btn-lg" style={{ width: "100%" }}>
-                        Save Changes
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
+            <SettingsPage
+              store={store}
+              dashboard={dashboard}
+              products={products}
+              customers={customers}
+              sales={sales}
+              purchases={purchases}
+              saveStore={saveStore}
+              showNotice={showNotice}
+            />
           )}
 
         </main>

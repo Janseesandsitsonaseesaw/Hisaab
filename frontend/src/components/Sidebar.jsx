@@ -1,7 +1,7 @@
 import React from "react";
 import {
   LayoutDashboard, Receipt, Package, Hexagon,
-  History as HistoryIcon, Settings, Users, Truck,
+  History as HistoryIcon, Settings, Users, Truck, Tag,
 } from "lucide-react";
 
 function NavItem({ icon: Icon, label, isActive, onClick }) {
@@ -25,7 +25,13 @@ export default function Sidebar({ activeTab, setActiveTab, store, isSidebarOpen,
     <aside className={`sidebar ${isSidebarOpen ? "open" : ""}`}>
       <div className="sidebar-header">
         <div className="brand">
-          <div className="brand-icon"><Hexagon size={18} strokeWidth={3} /></div>
+          <div className="brand-icon">
+            {store.logo_data_url ? (
+              <img src={store.logo_data_url} alt="Logo" />
+            ) : (
+              <Hexagon size={18} strokeWidth={3} />
+            )}
+          </div>
           <span>Hisaab</span>
         </div>
       </div>
@@ -42,7 +48,13 @@ export default function Sidebar({ activeTab, setActiveTab, store, isSidebarOpen,
 
       <div className="sidebar-footer">
         <div className="sidebar-store-card">
-          <div className="sidebar-avatar">{getInitials(store.owner_name)}</div>
+          <div className="sidebar-avatar">
+            {store.logo_data_url ? (
+              <img src={store.logo_data_url} alt="Logo" />
+            ) : (
+              <Hexagon size={18} strokeWidth={3} />
+            )}
+          </div>
           <div className="sidebar-store-info">
             <strong>{store.store_name}</strong>
             <small>{store.store_category}</small>
