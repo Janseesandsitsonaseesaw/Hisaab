@@ -1612,10 +1612,10 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
                             </td>
                             <td>
                               <div className="invoice-actions" style={{ justifyContent: "flex-end" }}>
-                                <button className="btn btn-ghost btn-sm" onClick={() => downloadInvoice(sale.id, sale.bill_number)} title="Download PDF">
+                                <button className="btn btn-ghost btn-sm" onClick={() => downloadInvoice(sale.id, sale.bill_number).catch(err => showNotice(err.message, "error"))} title="Download PDF">
                                   <Download size={14} /> PDF
                                 </button>
-                                <button className="btn btn-ghost btn-sm" onClick={() => printInvoice(sale.id)} title="Print">
+                                <button className="btn btn-ghost btn-sm" onClick={() => printInvoice(sale.id).catch(err => showNotice(err.message, "error"))} title="Print">
                                   <FileText size={14} />
                                 </button>
                                 <button className="btn btn-ghost btn-sm" onClick={() => shareReceipt(sale)} title="Share via WhatsApp">

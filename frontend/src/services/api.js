@@ -61,6 +61,9 @@ export async function api(path, options = {}) {
 
 export async function downloadInvoice(saleId, billNumber) {
   let token = "";
+  if (!supabase) {
+    throw new Error("Supabase client is not initialized. Please verify your environment variables.");
+  }
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session && session.access_token) {
@@ -70,15 +73,22 @@ export async function downloadInvoice(saleId, billNumber) {
     console.error(e);
   }
 
+  if (!token) {
+    throw new Error("Authentication token is missing. Please log in again.");
+  }
+
   const response = await fetch(
-        `${API_URL}/invoices/${saleId}/pdf`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    if (!response.ok) throw new Error("Failed to generate invoice");
+    `${API_URL}/invoices/${saleId}/pdf`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  if (!response.ok) {
+    const errorJson = await response.json().catch(() => ({}));
+    throw new Error(errorJson.detail || "Failed to generate invoice");
+  }
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -90,6 +100,9 @@ export async function downloadInvoice(saleId, billNumber) {
 
 export async function printInvoice(saleId) {
   let token = "";
+  if (!supabase) {
+    throw new Error("Supabase client is not initialized. Please verify your environment variables.");
+  }
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session && session.access_token) {
@@ -97,6 +110,10 @@ export async function printInvoice(saleId) {
     }
   } catch (e) {
     console.error(e);
+  }
+
+  if (!token) {
+    throw new Error("Authentication token is missing. Please log in again.");
   }
 
   const response = await fetch(
@@ -107,7 +124,10 @@ export async function printInvoice(saleId) {
       },
     }
   );
-  if (!response.ok) throw new Error("Failed to generate invoice");
+  if (!response.ok) {
+    const errorJson = await response.json().catch(() => ({}));
+    throw new Error(errorJson.detail || "Failed to generate invoice");
+  }
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const win = window.open(url, "_blank");

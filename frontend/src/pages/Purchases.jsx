@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Truck, Plus, FileText, Camera, AlertCircle, CheckCircle2, Trash2, X } from "lucide-react";
-import { fmt, api, safeNum } from "../services/api";
+import { fmt, api, safeNum, supabase } from "../services/api";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -86,9 +86,23 @@ export default function Purchases({ filteredPurchases, editingPurchase, setEditi
     setLoading(true);
     setItems([]);
     try {
+      let token = "";
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.access_token) {
+          token = session.access_token;
+        }
+      }
       const formData = new FormData();
       formData.append("file", file);
-      const resp = await fetch(`${API_URL}/invoice/extract`, { method: "POST", body: formData });
+      
+      const resp = await fetch(`${API_URL}/invoice/extract`, {
+        method: "POST",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: formData
+      });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ detail: "Extraction failed" }));
         throw new Error(err.detail || "Extraction failed");
