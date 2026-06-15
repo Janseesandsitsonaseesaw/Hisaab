@@ -70,8 +70,15 @@ export async function downloadInvoice(saleId, billNumber) {
     console.error(e);
   }
 
-  const response = await fetch(`${API_URL}/invoices/${saleId}/pdf?token=${encodeURIComponent(token)}`);
-  if (!response.ok) throw new Error("Failed to generate invoice");
+  const response = await fetch(
+        `${API_URL}/invoices/${saleId}/pdf`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (!response.ok) throw new Error("Failed to generate invoice");
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
