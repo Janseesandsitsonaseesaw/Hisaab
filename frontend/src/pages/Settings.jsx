@@ -190,10 +190,14 @@ export default function Settings({
     win.print();
   }
 
+  const todayStr = new Date().toDateString();
+  const localTodaySales = sales.filter(s => new Date(s.created_at).toDateString() === todayStr).reduce((sum, s) => sum + safeNum(s.total_amount), 0);
+  const displaySales = localTodaySales > 0 ? localTodaySales : safeNum(dashboard.today_sales);
+
   const overviewCards = [
-    { label: "Total Products", value: products.length, icon: Package, tone: "primary" },
-    { label: "Total Customers", value: customers.length, icon: Users, tone: "success" },
-    { label: "Today's Sales", value: fmt(dashboard.today_sales), icon: Receipt, tone: "primary" },
+    { label: "Total Products", value: Math.max(products.length, safeNum(dashboard.total_products)), icon: Package, tone: "primary" },
+    { label: "Total Customers", value: Math.max(customers.length, safeNum(dashboard.total_customers)), icon: Users, tone: "success" },
+    { label: "Today's Sales", value: fmt(displaySales), icon: Receipt, tone: "primary" },
     { label: "Outstanding Udhaar", value: fmt(dashboard.total_udhaar_outstanding), icon: Wallet, tone: "warning" },
   ];
 
