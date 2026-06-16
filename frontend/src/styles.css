@@ -2132,26 +2132,46 @@ a { text-decoration: none; color: inherit; }
   border-radius: 12px;
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
 }
 
+.udhaar-summary-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+}
+
+.udhaar-summary-card.card-credit::before {
+  background: var(--brand-primary);
+}
 .udhaar-summary-card.card-credit {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-color: #fcd34d;
+  border-color: var(--brand-primary-soft);
 }
 
+.udhaar-summary-card.card-payment::before {
+  background: var(--success);
+}
 .udhaar-summary-card.card-payment {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  border-color: #6ee7b7;
+  border-color: var(--success-soft);
 }
 
+.udhaar-summary-card.card-balance::before {
+  background: var(--danger);
+}
 .udhaar-summary-card.card-balance {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  border-color: #fca5a5;
+  border-color: var(--danger-soft);
 }
 
+.udhaar-summary-card.card-balance.zero::before {
+  background: var(--success);
+}
 .udhaar-summary-card.card-balance.zero {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  border-color: #6ee7b7;
+  border-color: var(--success-soft);
 }
 
 .udhaar-summary-label {
