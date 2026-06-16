@@ -20,6 +20,7 @@ export default function Customers({
   customerUdhaar,
   udhaarForm, setUdhaarForm,
   saveUdhaarEntry,
+  sales = [],
 }) {
   const [customerToDelete, setCustomerToDelete] = useState(null);
   return (
@@ -194,10 +195,10 @@ export default function Customers({
             </button>
           </div>
 
-          {editingCustomer && !editingCustomer.id && (
+          {editingCustomer && !selectedCustomer && (
             <div className="card" style={{ marginBottom: "24px" }}>
               <div className="card-header">
-                <h3 className="card-title">New Customer</h3>
+                <h3 className="card-title">{editingCustomer.id ? "Edit Customer" : "New Customer"}</h3>
                 <button className="btn btn-ghost btn-sm" onClick={() => setEditingCustomer(null)}>Cancel</button>
               </div>
               <div className="card-body">
@@ -205,7 +206,7 @@ export default function Customers({
                   <div className="form-row">
                     <div className="form-group">
                       <label className="form-label">Customer Name</label>
-                      <input className="form-input" required name="name" />
+                      <input className="form-input" required name="name" defaultValue={editingCustomer.name || ""} />
                     </div>
                     <div className="form-group">
                       <label className="form-label">Phone Number</label>
@@ -213,6 +214,7 @@ export default function Customers({
                         className="form-input"
                         required
                         name="phone"
+                        defaultValue={editingCustomer.phone || ""}
                         inputMode="numeric"
                         maxLength={10}
                         pattern="[0-9]{10}"
@@ -223,11 +225,11 @@ export default function Customers({
                   <div className="form-row">
                     <div className="form-group">
                       <label className="form-label">Email (optional)</label>
-                      <input className="form-input" name="email" type="email" />
+                      <input className="form-input" name="email" type="email" defaultValue={editingCustomer.email || ""} />
                     </div>
                     <div className="form-group">
                       <label className="form-label">Address (optional)</label>
-                      <input className="form-input" name="address" />
+                      <input className="form-input" name="address" defaultValue={editingCustomer.address || ""} />
                     </div>
                   </div>
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "16px" }}>
@@ -245,40 +247,55 @@ export default function Customers({
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Customer</th>
-                      <th>Phone</th>
-                      <th>Email</th>
-                      <th>Outstanding</th>
+                      <th>Customer Name</th>
+                      <th>Phone Number</th>
+                      <th>Total Purchases</th>
+                      <th>Udhaar Amount</th>
+                      <th>Last Purchase Date</th>
                       <th style={{ textAlign: "right" }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCustomers.map((customer) => (
-                      <tr key={customer.id} style={{ cursor: "pointer" }} onClick={() => loadCustomerDetail(customer.id)}>
-                        <td>
-                          <div className="td-product">
-                            <div className="product-icon"><Users size={20} /></div>
-                            <div className="product-details">
-                              <strong>{customer.name}</strong>
-                              <small>Since {new Date(customer.created_at).toLocaleDateString("en-IN")}</small>
+                    {filteredCustomers.map((customer) => {
+                      const customerSales = sales.filter((s) => s.customer_id === customer.id);
+                      const totalPurchasesSum = customerSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
+                      const lastPurchaseDate = customerSales.length > 0
+                        ? new Date(Math.max(...customerSales.map(s => new Date(s.created_at).getTime()))).toLocaleDateString("en-IN")
+                        : "Never";
+
+                      return (
+                        <tr key={customer.id} style={{ cursor: "pointer" }} onClick={() => loadCustomerDetail(customer.id)}>
+                          <td>
+                            <div className="td-product">
+                              <div className="product-icon"><Users size={20} /></div>
+                              <div className="product-details">
+                                <strong>{customer.name}</strong>
+                                <small>Since {new Date(customer.created_at).toLocaleDateString("en-IN")}</small>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td>{customer.phone}</td>
-                        <td>{customer.email || "—"}</td>
-                        <td>
-                          <span className={`badge ${(customer.outstanding_balance || 0) > 0 ? "badge-danger" : "badge-success"}`}>
-                            {fmt(customer.outstanding_balance || 0)}
-                          </span>
-                        </td>
-                        <td>
-                          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                            <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setEditingCustomer(customer); }}><Edit2 size={16} /></button>
-                            <button className="btn btn-ghost btn-sm text-danger" onClick={(e) => { e.stopPropagation(); setCustomerToDelete(customer.id); }}><Trash2 size={16} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td>{customer.phone}</td>
+                          <td>
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                              <strong>{fmt(totalPurchasesSum)}</strong>
+                              <small style={{ color: "var(--text-tertiary)" }}>{customerSales.length} bill{customerSales.length !== 1 ? "s" : ""}</small>
+                            </div>
+                          </td>
+                          <td>
+                            <span className={`badge ${(customer.outstanding_balance || 0) > 0 ? "badge-danger" : "badge-success"}`}>
+                              {fmt(customer.outstanding_balance || 0)}
+                            </span>
+                          </td>
+                          <td>{lastPurchaseDate}</td>
+                          <td>
+                            <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                              <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setEditingCustomer(customer); }} title="Edit Customer"><Edit2 size={16} /></button>
+                              <button className="btn btn-ghost btn-sm text-danger" onClick={(e) => { e.stopPropagation(); setCustomerToDelete(customer.id); }} title="Delete Customer"><Trash2 size={16} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

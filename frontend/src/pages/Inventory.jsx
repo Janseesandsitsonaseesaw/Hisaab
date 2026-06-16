@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useMemo } from "react";
 import { Package, Plus, Edit2, Trash2, Camera, X, Search, BarChart2, AlertTriangle, DollarSign, ChevronDown, ChevronUp } from "lucide-react";
 import { BrowserMultiFormatReader } from "@zxing/library";
 import { fmt } from "../services/api";
+import ProductAvatar from "../components/ProductAvatar";
 
 // Categories per store type
 const STORE_CATEGORIES = {
@@ -33,21 +34,7 @@ function getCategoriesForStore(storeCategory = "", extraCategories = [], removed
   return merged.filter(c => !removedCategories.some(r => r.toLowerCase() === c.toLowerCase()));
 }
 
-// Generate a consistent color from a string
-const THUMB_COLORS = [
-  "#1e3a8a","#065f46","#7c3aed","#b45309","#0e7490","#be123c",
-  "#0369a1","#166534","#6d28d9","#92400e","#0f766e","#9f1239",
-];
-function thumbColor(str = "") {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-  return THUMB_COLORS[h % THUMB_COLORS.length];
-}
-function thumbInitials(name = "") {
-  const words = name.trim().split(/\s+/);
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-  return (words[0][0] + words[1][0]).toUpperCase();
-}
+
 
 export default function Inventory({ products, filteredProducts, editingProduct, setEditingProduct, saveProduct, setProducts, setCart, store, showNotice, api, refresh }) {
   const [productToLink, setProductToLink] = useState(null);
@@ -653,13 +640,7 @@ export default function Inventory({ products, filteredProducts, editingProduct, 
                         </td>
                         <td>
                           <div className="td-product">
-                            <div
-                              className="prod-thumb"
-                              style={{ background: thumbColor(product.name) }}
-                              title={product.name}
-                            >
-                              {thumbInitials(product.name)}
-                            </div>
+                            <ProductAvatar name={product.name} size={36} />
                             <div className="product-details">
                               <strong style={{ fontSize: "14px", fontWeight: "600", color: "var(--text-primary)" }}>{product.name}</strong>
                               <div style={{ marginTop: "4px" }}>
