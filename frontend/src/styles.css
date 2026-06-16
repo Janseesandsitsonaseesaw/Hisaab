@@ -1259,8 +1259,7 @@ a { text-decoration: none; color: inherit; }
   gap: 20px;
   overflow-y: auto;
   flex: 1;
-  padding-bottom: 12px;
-  padding-right: 2px;
+  padding: 12px 12px 12px 12px;
 }
 
 .product-card {

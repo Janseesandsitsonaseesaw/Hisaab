@@ -10,6 +10,7 @@ export default function Purchases({ filteredPurchases, editingPurchase, setEditi
   const [invoiceFile, setInvoiceFile] = useState(null);
   const [items, setItems]             = useState([]);
   const [loading, setLoading]         = useState(false);
+  const [processing, setProcessing]   = useState(false);
   const [dragOver, setDragOver]       = useState(false);
   const [selectedPurchaseIds, setSelectedPurchaseIds] = useState({});
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
@@ -157,7 +158,7 @@ export default function Purchases({ filteredPurchases, editingPurchase, setEditi
   async function confirmItems() {
     const valid = items.filter(i => i.enabled && isReady(i));
     if (valid.length === 0) { showNotice("No valid items to save", "error"); return; }
-    setLoading(true);
+    setProcessing(true);
     let successCount = 0;
     try {
       for (const item of valid) {
@@ -195,7 +196,7 @@ export default function Purchases({ filteredPurchases, editingPurchase, setEditi
         await refresh();
       }
     } finally {
-      setLoading(false);
+      setProcessing(false);
     }
   }
 
@@ -222,7 +223,7 @@ export default function Purchases({ filteredPurchases, editingPurchase, setEditi
       {showModal && (
         <div
           style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
+          onClick={(e) => { if (e.target === e.currentTarget && !loading && !processing) setShowModal(false); }}
         >
           <div style={{ background: "var(--bg-primary)", borderRadius: "16px", width: "100%", maxWidth: "700px", maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 24px 64px rgba(0,0,0,0.35)" }}>
             <div style={{ padding: "20px 24px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -230,13 +231,13 @@ export default function Purchases({ filteredPurchases, editingPurchase, setEditi
                 <h3 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700, color: "var(--text-primary)" }}>Import from Invoice</h3>
                 <p style={{ margin: "4px 0 0", fontSize: "0.8125rem", color: "var(--text-secondary)" }}>Upload a supplier invoice — AI extracts products automatically.</p>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)} style={{ fontSize: "1.25rem", padding: "4px 10px" }}>✕</button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowModal(false)} style={{ fontSize: "1.25rem", padding: "4px 10px" }} disabled={loading || processing}>✕</button>
             </div>
 
             <div style={{ padding: "20px 24px 24px", overflowY: "auto", flex: 1 }}>
 
               {/* Drop zone */}
-              {!invoiceFile && !loading && (
+              {!invoiceFile && !loading && !processing && (
                 <div
                   onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                   onDragLeave={() => setDragOver(false)}
@@ -259,7 +260,7 @@ export default function Purchases({ filteredPurchases, editingPurchase, setEditi
               <input id="inv-file-input" type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadInvoice(f); e.target.value = ""; }} />
               <input id="inv-camera-input" type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadInvoice(f); e.target.value = ""; }} />
 
-              {/* Loader */}
+              {/* Extraction Loader */}
               {loading && (
                 <div style={{ textAlign: "center", padding: "48px 24px" }}>
                   <div style={{ width: "52px", height: "52px", margin: "0 auto 16px", borderRadius: "50%", border: "4px solid var(--border-color)", borderTop: "4px solid var(--brand-primary)", animation: "spin 0.8s linear infinite" }} />
@@ -269,8 +270,18 @@ export default function Purchases({ filteredPurchases, editingPurchase, setEditi
                 </div>
               )}
 
+              {/* Processing Loader */}
+              {processing && (
+                <div style={{ textAlign: "center", padding: "48px 24px" }}>
+                  <div style={{ width: "52px", height: "52px", margin: "0 auto 16px", borderRadius: "50%", border: "4px solid var(--border-color)", borderTop: "4px solid var(--brand-primary)", animation: "spin 0.8s linear infinite" }} />
+                  <p style={{ margin: "0 0 4px", fontWeight: 600, color: "var(--text-primary)" }}>Adding products to inventory...</p>
+                  <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--text-secondary)" }}>Saving products, updating inventory, and creating records.</p>
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </div>
+              )}
+
               {/* Review table */}
-              {!loading && items.length > 0 && (
+              {!loading && !processing && items.length > 0 && (
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
                     <p style={{ margin: 0, fontWeight: 600, color: "var(--text-primary)" }}>

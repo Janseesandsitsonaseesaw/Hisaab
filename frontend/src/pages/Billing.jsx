@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import {
   Search, X, Camera, Receipt, FileText, Minus, Plus, ShoppingCart,
-  CreditCard, Smartphone, Wallet, MessageCircle, Link2, Zap,
+  CreditCard, Smartphone, Wallet, MessageCircle, Link2, Zap, Trash2
 } from "lucide-react";
 import { BrowserMultiFormatReader } from "@zxing/library";
 import ProductCard from "../components/ProductCard";
@@ -330,15 +330,25 @@ export default function Billing({
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px" }}>
                     <div className="cart-item-total">{fmt(displayPrice * line.quantity)}</div>
-                    {/* Large Quantity Controls */}
-                    <div className="qty-control">
-                      <button className="qty-btn" onClick={(e) => { e.stopPropagation(); updateCart(line.product_id, -1); }}>
-                        <Minus size={16} />
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <button 
+                        className="btn btn-ghost btn-sm" 
+                        style={{ padding: "4px", color: "var(--danger)", height: "auto" }}
+                        onClick={(e) => { e.stopPropagation(); updateCart(line.product_id, -line.quantity); }}
+                        title="Remove item"
+                      >
+                        <Trash2 size={16} />
                       </button>
-                      <span className="qty-value">{line.quantity}</span>
-                      <button className="qty-btn" onClick={(e) => { e.stopPropagation(); updateCart(line.product_id, 1); }}>
-                        <Plus size={16} />
-                      </button>
+                      {/* Large Quantity Controls */}
+                      <div className="qty-control">
+                        <button className="qty-btn" onClick={(e) => { e.stopPropagation(); updateCart(line.product_id, -1); }}>
+                          <Minus size={16} />
+                        </button>
+                        <span className="qty-value">{line.quantity}</span>
+                        <button className="qty-btn" onClick={(e) => { e.stopPropagation(); updateCart(line.product_id, 1); }}>
+                          <Plus size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
