@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
-import { Package, Plus, Edit2, Trash2, Camera, X, Search, BarChart2, AlertTriangle, DollarSign } from "lucide-react";
+import { Package, Plus, Edit2, Trash2, Camera, X, Search, BarChart2, AlertTriangle, DollarSign, ChevronDown, ChevronUp } from "lucide-react";
 import { BrowserMultiFormatReader } from "@zxing/library";
 import { fmt } from "../services/api";
 
@@ -56,6 +56,8 @@ export default function Inventory({ products, filteredProducts, editingProduct, 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [categoryEdits, setCategoryEdits] = useState({});
   const [savingCategories, setSavingCategories] = useState(false);
+  const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(false);
+  const [isProductsExpanded, setIsProductsExpanded] = useState(true);
 
   // Inventory-level search + category filter
   const [invSearch, setInvSearch] = useState("");
@@ -383,12 +385,16 @@ export default function Inventory({ products, filteredProducts, editingProduct, 
 
       {editingProduct && (
         <div className="card" style={{ marginBottom: "24px" }}>
-          <div className="card-header">
-            <h3 className="card-title">{editingProduct.id ? "Edit Product" : "New Product"}</h3>
-            <button className="btn btn-ghost btn-sm" onClick={() => setEditingProduct(null)}>Cancel</button>
+          <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setIsProductsExpanded(!isProductsExpanded)}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {isProductsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+              <h3 className="card-title">{editingProduct.id ? "Edit Product" : "New Product"}</h3>
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setEditingProduct(null); }}>Cancel</button>
           </div>
-          <div className="card-body">
-            <form onSubmit={saveProduct}>
+          {isProductsExpanded && (
+            <div className="card-body">
+              <form onSubmit={saveProduct}>
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Product Name</label>
@@ -513,19 +519,26 @@ export default function Inventory({ products, filteredProducts, editingProduct, 
               </div>
             </form>
           </div>
+          )}
         </div>
       )}
 
       <div className="card" style={{ marginBottom: "24px" }}>
-        <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 className="card-title">Manage Categories</h3>
-          {selectedCatCount > 0 && (
-            <button className="btn btn-danger btn-sm" onClick={handleBulkDeleteCategories} disabled={deletingCategories}>
-              <Trash2 size={14} /> Delete Selected ({selectedCatCount})
-            </button>
-          )}
+        <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {isCategoriesExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            <h3 className="card-title">Manage Categories</h3>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }} onClick={(e) => e.stopPropagation()}>
+            {selectedCatCount > 0 && (
+              <button className="btn btn-danger btn-sm" onClick={handleBulkDeleteCategories} disabled={deletingCategories}>
+                <Trash2 size={14} /> Delete Selected ({selectedCatCount})
+              </button>
+            )}
+          </div>
         </div>
-        <div className="card-body" style={{ padding: "24px" }}>
+        {isCategoriesExpanded && (
+          <div className="card-body" style={{ padding: "24px" }}>
           {allCategories.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {allCategories.map((cat) => {
@@ -572,6 +585,7 @@ export default function Inventory({ products, filteredProducts, editingProduct, 
             All categories can be renamed or deleted. Products in a deleted category will be reassigned.
           </p>
         </div>
+        )}
       </div>
 
       <div className="card">

@@ -123,6 +123,15 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
   });
 
   const [appLoading, setAppLoading] = useState(true);
+  const [storeFetchStatus, setStoreFetchStatus] = useState("loading"); // "idle", "loading", "success", "error"
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem("hisaab_sidebar_collapsed") === "true";
+  });
+
+  const handleSetSidebarCollapsed = (val) => {
+    setIsSidebarCollapsed(val);
+    localStorage.setItem("hisaab_sidebar_collapsed", val ? "true" : "false");
+  };
 
   const [chartTab,         setChartTab]         = useState("sales");
   const [store,            setStore]            = useState(null);
@@ -271,21 +280,43 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
   const barcodeTimeout = useRef(null);
 
   async function refresh() {
-    const [storeData, productData, salesData, dashboardData, customerData, purchaseData] = await Promise.all([
-      api("/store"),
-      api("/products"),
-      api("/sales"),
-      api("/dashboard"),
-      api("/customers"),
-      api("/purchases"),
-    ]);
-    setStore(storeData);
-    setProducts(productData);
-    setSales(salesData);
-    setDashboard(dashboardData);
-    setCustomers(customerData);
-    setPurchases(purchaseData);
-    return storeData;
+    const safeFetch = async (path, fallback) => {
+      try {
+        const res = await api(path);
+        return res;
+      } catch (err) {
+        console.error(`Error loading secondary API ${path}:`, err);
+        return fallback;
+      }
+    };
+
+    try {
+      setStoreFetchStatus("loading");
+      const storeData = await api("/store");
+      setStore(storeData);
+      setStoreFetchStatus("success");
+
+      // Fetch other less critical elements in parallel with fallbacks
+      const [productData, salesData, dashboardData, customerData, purchaseData] = await Promise.all([
+        safeFetch("/products", []),
+        safeFetch("/sales", []),
+        safeFetch("/dashboard", { total_products: 0, low_stock_products: [], top_selling_products: [], today_sales: 0, today_profit: 0, weekly_sales: 0, monthly_sales: 0, total_customers: 0, total_udhaar_outstanding: 0, recent_purchases: [], recent_udhaar: [] }),
+        safeFetch("/customers", []),
+        safeFetch("/purchases", []),
+      ]);
+
+      setProducts(productData);
+      setSales(salesData);
+      setDashboard(dashboardData);
+      setCustomers(customerData);
+      setPurchases(purchaseData);
+
+      return storeData;
+    } catch (err) {
+      console.error("Critical store profile load failed:", err);
+      setStoreFetchStatus("error");
+      throw err;
+    }
   }
 
   useEffect(() => {
@@ -307,11 +338,15 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
               setActiveTab("onboarding");
             }
           })
-          .catch((err) => showNotice(err.message, "error"))
+          .catch((err) => {
+            console.error("Failed to load store data:", err);
+            showNotice("Store data load failed. Please check connection.", "error");
+          })
           .finally(() => setAppLoading(false));
       } else {
         setCurrentUser(null);
         setAppLoading(false);
+        setStoreFetchStatus("idle");
       }
     });
 
@@ -319,9 +354,12 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         setCurrentUser(session.user);
-        refresh().catch((err) => console.error("Initial load failed:", err));
+        refresh()
+          .catch((err) => console.error("Initial load failed:", err))
+          .finally(() => setAppLoading(false));
       } else {
         setCurrentUser(null);
+        setStoreFetchStatus("idle");
         // If logged out or session expired, redirect to signin/landing
         const publicTabs = ["landing", "signin", "signup", "forgot-password", "reset-password"];
         if (!publicTabs.includes(activeTab)) {
@@ -1296,22 +1334,105 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
 
   // ── Loading ──────────────────────────────────────────────────────────────────
   const isAuthView = ["landing", "signin", "signup", "onboarding"].includes(activeTab);
-  
-  // Route Guards
-  if (!currentUser && !["landing", "signin", "signup"].includes(activeTab)) {
-    return renderLanding();
-  }
 
-  if (appLoading && currentUser && !["landing", "signin", "signup"].includes(activeTab)) {
+  function renderErrorFallback() {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", flexDirection: "column", gap: "16px" }}>
-        <div style={{ width: "40px", height: "40px", border: "3px solid var(--border)", borderTopColor: "var(--primary)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-        <span style={{ color: "var(--text-muted)", fontSize: "14px" }}>Loading your store…</span>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', padding: '20px', textAlign: 'center' }}>
+        <div style={{ padding: '15px', borderRadius: '50%', backgroundColor: 'var(--brand-primary-soft)', color: 'var(--brand-primary)', marginBottom: '20px' }}>
+          <AlertCircle size={48} />
+        </div>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '10px' }}>Failed to Load Store Data</h2>
+        <p style={{ maxWidth: '500px', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '20px' }}>
+          We encountered a connection issue while fetching your store settings. Please try again.
+        </p>
+        <button className="btn btn-primary" onClick={() => {
+          setAppLoading(true);
+          setStoreFetchStatus("loading");
+          refresh()
+            .catch((err) => showNotice(err.message, "error"))
+            .finally(() => setAppLoading(false));
+        }}>
+          Retry Connection
+        </button>
       </div>
     );
   }
 
-  if (currentUser && (!store || !store.store_name) && !["landing", "signin", "signup", "onboarding"].includes(activeTab)) {
+  function renderPremiumSkeleton() {
+    return (
+      <div className="app-container" style={{ backgroundColor: "var(--bg-primary)" }}>
+        {/* Skeleton Sidebar */}
+        <aside className={`sidebar ${isSidebarCollapsed ? "collapsed" : ""}`} style={{ pointerEvents: "none" }}>
+          <div className="sidebar-header">
+            <div className="brand">
+              <div className="brand-icon skeleton-shimmer" style={{ background: "none" }} />
+              {!isSidebarCollapsed && <div className="skeleton-block skeleton-shimmer" style={{ width: "80px", height: "18px" }} />}
+            </div>
+          </div>
+          <div className="sidebar-nav" style={{ gap: "12px", padding: "24px 16px" }}>
+            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px", height: "36px" }}>
+                <div className="skeleton-circle skeleton-shimmer" style={{ width: "24px", height: "24px" }} />
+                {!isSidebarCollapsed && <div className="skeleton-block skeleton-shimmer" style={{ width: "100px", height: "14px" }} />}
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        {/* Skeleton Main Content */}
+        <div className="main-wrapper" style={{ overflow: "hidden" }}>
+          {/* Skeleton Navbar */}
+          <header className="navbar" style={{ height: "var(--navbar-height)", borderBottom: "1px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px" }}>
+            <div className="skeleton-block skeleton-shimmer" style={{ width: "180px", height: "20px" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <div className="skeleton-circle skeleton-shimmer" style={{ width: "32px", height: "32px" }} />
+              <div className="skeleton-circle skeleton-shimmer" style={{ width: "32px", height: "32px" }} />
+            </div>
+          </header>
+
+          <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "24px", height: "calc(100vh - var(--navbar-height))", overflow: "hidden" }}>
+            {/* Page Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div className="skeleton-title skeleton-shimmer" style={{ width: "140px", height: "28px", marginBottom: "6px" }} />
+                <div className="skeleton-text skeleton-shimmer" style={{ width: "200px", height: "14px" }} />
+              </div>
+              <div className="skeleton-block skeleton-shimmer" style={{ width: "120px", height: "40px", borderRadius: "8px" }} />
+            </div>
+
+            {/* KPI Grid */}
+            <div className="kpi-grid">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
+                <div className="skeleton-card" key={i} style={{ height: "105px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div className="skeleton-block skeleton-shimmer" style={{ width: "80px", height: "12px" }} />
+                    <div className="skeleton-circle skeleton-shimmer" style={{ width: "28px", height: "28px" }} />
+                  </div>
+                  <div className="skeleton-block skeleton-shimmer" style={{ width: "120px", height: "24px" }} />
+                  <div className="skeleton-block skeleton-shimmer" style={{ width: "90px", height: "10px" }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Route Guards
+  if (!currentUser && !["landing", "signin", "signup", "forgot-password", "reset-password"].includes(activeTab)) {
+    return renderLanding();
+  }
+
+  if (appLoading && currentUser && !["landing", "signin", "signup", "forgot-password", "reset-password"].includes(activeTab)) {
+    return renderPremiumSkeleton();
+  }
+
+  if (storeFetchStatus === "error" && currentUser && !["landing", "signin", "signup", "forgot-password", "reset-password"].includes(activeTab)) {
+    return renderErrorFallback();
+  }
+
+  if (currentUser && storeFetchStatus === "success" && (!store || !store.store_name) && !["landing", "signin", "signup", "forgot-password", "reset-password", "onboarding"].includes(activeTab)) {
     return renderOnboarding();
   }
 
@@ -1342,6 +1463,8 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
         setIsSidebarOpen={setIsSidebarOpen}
         getInitials={getInitials}
         setSelectedCustomer={setSelectedCustomer}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={handleSetSidebarCollapsed}
       />
 
       <div className="main-wrapper">
