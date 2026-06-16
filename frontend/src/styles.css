@@ -1255,9 +1255,9 @@ a { text-decoration: none; color: inherit; }
 /* Product grid */
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   grid-auto-rows: 1fr;
-  gap: 24px;
+  gap: 20px;
   overflow-y: auto;
   flex: 1;
   padding-bottom: 12px;
@@ -1269,12 +1269,12 @@ a { text-decoration: none; color: inherit; }
   transition: var(--transition-normal) !important;
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   aspect-ratio: 1 / 1;
   width: 100%;
   height: 100%;
@@ -1291,11 +1291,11 @@ a { text-decoration: none; color: inherit; }
 
 .product-card:active { transform: translateY(0); }
 
-.product-card-header   { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; width: 100%; }
+.product-card-header   { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; width: 100%; }
 .product-card-title    {
   font-weight: 600;
-  font-size: 0.9375rem;
-  line-height: 1.3;
+  font-size: 0.875rem;
+  line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -1304,9 +1304,9 @@ a { text-decoration: none; color: inherit; }
   word-break: break-word;
   flex: 1;
 }
-.product-card-price    { font-weight: 700; color: var(--brand-primary); font-size: 1rem; }
-.product-card-category { font-size: 0.8125rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.product-card-barcode  { display: flex; justify-content: center; align-items: center; min-height: 14px; }
+.product-card-price    { font-weight: 700; color: var(--brand-primary); font-size: 0.95rem; }
+.product-card-category { font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.product-card-barcode  { display: flex; justify-content: flex-start; align-items: center; min-height: 14px; }
 .product-card-barcode-svg { max-width: 100%; height: auto; }
 
 /* Cart sidebar */
