@@ -975,10 +975,10 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
           <div className="hero-content">
             <div className="hero-badge"><Sparkles size={14} /> The #1 Retail POS Command Center</div>
             <h1 className="hero-title">
-              SaaS Landing Page Template
+              The smart way to run your <span style={{ color: "var(--brand-primary)" }}>retail business</span>
             </h1>
             <p className="hero-subtitle">
-              Hisaab is where you keep your credit, debit, and transit cards, boarding passes, tickets, and more — all in one place.
+              Hisaab is a premium, cloud-hosted POS platform designed to automate billing, manage real-time inventory, scan barcodes, analyze sales, and track credit ledgers (Udhaar).
             </p>
             <div className="hero-actions">
               {currentUser ? (
