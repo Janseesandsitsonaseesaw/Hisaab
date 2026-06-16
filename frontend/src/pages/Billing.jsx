@@ -6,6 +6,7 @@ import {
 import { BrowserMultiFormatReader } from "@zxing/library";
 import ProductCard from "../components/ProductCard";
 import { fmt, safeNum } from "../services/api";
+import { playBarcodeSound } from "../services/audio";
 
 export default function Billing({
   products, filteredProducts,
@@ -78,11 +79,14 @@ export default function Billing({
 
   function handleBarcodeDetected(code) {
     const found = products.find((p) => p.barcode === code);
+    const soundEnabled = store?.enable_scanner_sounds !== false;
     if (found) {
+      if (soundEnabled) playBarcodeSound("success");
       addToCart(found);
       setProductQuery("");
       showNotice(`${found.name} added to cart`);
     } else {
+      if (soundEnabled) playBarcodeSound("error");
       setUnmatchedBarcode(code);
       setBarcodeAction(null);
       setLinkChoice("");
@@ -138,10 +142,21 @@ export default function Billing({
   function handleSearchKey(e) {
     if (e.key === "Enter" && productQuery) {
       const q = productQuery.toLowerCase();
+      const soundEnabled = store?.enable_scanner_sounds !== false;
       const found = products.find(p => p.barcode === productQuery || p.name.toLowerCase() === q);
-      if (found) { addToCart(found); setProductQuery(""); return; }
-      if (filteredProducts.length === 1) { addToCart(filteredProducts[0]); setProductQuery(""); return; }
+      if (found) { 
+        if (soundEnabled) playBarcodeSound("success");
+        addToCart(found); setProductQuery(""); return; 
+      }
+      if (filteredProducts.length === 1) { 
+        if (soundEnabled) playBarcodeSound("success");
+        addToCart(filteredProducts[0]); setProductQuery(""); return; 
+      }
       if (/^\d{6,}$/.test(productQuery)) { handleBarcodeDetected(productQuery); }
+      else {
+        if (soundEnabled) playBarcodeSound("error");
+        showNotice("No matching product found", "error");
+      }
     }
   }
 

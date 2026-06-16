@@ -315,13 +315,25 @@ export default function Settings({
               <div className="settings-card-header">
                 <div className="settings-card-icon"><FileText size={18} /></div>
                 <div>
-                  <h3>Receipt Settings</h3>
-                  <p>Customize what customers see on printed and WhatsApp receipts.</p>
+                  <h3>Receipt & App Settings</h3>
+                  <p>Customize receipts and app behavior.</p>
                 </div>
               </div>
               <div className="form-group">
                 <label className="form-label">Footer Message</label>
                 <textarea className="form-input settings-textarea" name="receipt_footer" rows={3} value={draft.receipt_footer || ""} onChange={(e) => updateDraft("receipt_footer", e.target.value)} />
+              </div>
+              <div className="form-group" style={{ marginTop: "16px" }}>
+                <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", width: "fit-content" }}>
+                  <input 
+                    type="checkbox" 
+                    checked={draft.enable_scanner_sounds !== false} 
+                    onChange={(e) => updateDraft("enable_scanner_sounds", e.target.checked)}
+                    style={{ width: "16px", height: "16px", accentColor: "var(--brand-primary)" }}
+                  />
+                  <span>Enable Barcode Scanner Sounds</span>
+                </label>
+                <small className="field-hint" style={{ marginTop: "4px" }}>Play a beep when a barcode is successfully scanned or an error buzzer if it fails.</small>
               </div>
             </section>
           </div>
