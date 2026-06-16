@@ -12,7 +12,7 @@ import StatCard from "../components/StatCard";
 import AskHisaabAI from "../components/AskHisaabAI";
 import { fmt, safeNum } from "../services/api";
 
-const DONUT_COLORS = ["#10b981", "#f59e0b", "#ef4444"];
+const DONUT_COLORS = ["#a7f3d0", "#fde68a", "#fecaca"];
 
 const activityConfig = {
   bill:    { bg: "#dbeafe", color: "#2563eb", icon: Receipt },
@@ -219,7 +219,7 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
           </div>
 
           {/* Today's Summary */}
-          <div className="card card-accent-primary">
+          <div className="card">
             <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <h3 className="card-title" style={{ color: "var(--brand-primary)" }}>Today's Summary</h3>
               <div className="summary-stat-row"><span>Gross Revenue</span><strong>{fmt(dashboard.today_sales)}</strong></div>

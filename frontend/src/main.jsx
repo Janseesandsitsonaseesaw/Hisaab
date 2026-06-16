@@ -966,7 +966,6 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
             ) : (
               <>
                 <button className="lp-btn-secondary" onClick={() => { setAuthError(""); setActiveTab("signin"); }}>Sign In</button>
-                <button className="lp-btn-primary" onClick={() => { setAuthError(""); setActiveTab("signup"); }}>Get Started</button>
               </>
             )}
           </div>
@@ -976,10 +975,10 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
           <div className="hero-content">
             <div className="hero-badge"><Sparkles size={14} /> The #1 Retail POS Command Center</div>
             <h1 className="hero-title">
-              The smart way to run your <span className="gradient-text">retail business</span>
+              SaaS Landing Page Template
             </h1>
             <p className="hero-subtitle">
-              Hisaab is a premium, cloud-hosted POS platform designed to automate billing, manage real-time inventory, scan barcodes, analyze sales, and track credit ledgers (Udhaar).
+              Hisaab is where you keep your credit, debit, and transit cards, boarding passes, tickets, and more — all in one place.
             </p>
             <div className="hero-actions">
               {currentUser ? (
@@ -996,37 +995,57 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
                   <button className="lp-btn-primary lp-btn-lg" onClick={() => { setAuthError(""); setActiveTab("signup"); }}>
                     Get Started Free <ArrowRight size={18} />
                   </button>
-                  <button className="lp-btn-secondary lp-btn-lg" onClick={() => { setAuthError(""); setActiveTab("signin"); }}>
-                    Sign In to POS
-                  </button>
                 </>
               )}
             </div>
           </div>
+          
           <div className="hero-preview-container">
-            <div className="hero-dashboard-mock">
-              <div className="mock-window-header">
-                <div className="mock-dots"><span/><span/><span/></div>
-                <div className="mock-url">app.hisaab.io/dashboard</div>
-              </div>
-              <div className="mock-dashboard-content">
-                <div className="mock-sidebar">
-                  <div className="mock-logo"><Hexagon size={16} /> Hisaab</div>
-                  <div className="mock-nav-item active">Dashboard</div>
-                  <div className="mock-nav-item">Billing</div>
-                  <div className="mock-nav-item">Products</div>
-                  <div className="mock-nav-item">Udhaar</div>
-                </div>
-                <div className="mock-main">
-                  <div className="mock-metrics">
-                    <div className="mock-card"><h4>Sales Today</h4><strong>₹28,450</strong><span className="trend">+14%</span></div>
-                    <div className="mock-card"><h4>Transactions</h4><strong>124</strong><span className="trend">+8%</span></div>
-                    <div className="mock-card"><h4>Low Stock Alerts</h4><strong>3 Products</strong><span className="trend-down">Critical</span></div>
+            <div className="landing-dashboard-grid">
+              <div className="landing-card card-monthly-plan">
+                <span className="card-label">Monthly plan</span>
+                <div className="donut-wrapper">
+                  <svg viewBox="0 0 100 100" className="donut-svg">
+                    <circle cx="50" cy="50" r="34" fill="transparent" stroke="#2a2a2a" strokeWidth="6" />
+                    <circle cx="50" cy="50" r="34" fill="transparent" stroke="#3b82f6" strokeWidth="8" strokeDasharray="140 213" strokeDashoffset="0" strokeLinecap="round" />
+                    <circle cx="50" cy="50" r="34" fill="transparent" stroke="#ef4444" strokeWidth="8" strokeDasharray="40 213" strokeDashoffset="-140" strokeLinecap="round" />
+                    <circle cx="50" cy="50" r="34" fill="transparent" stroke="#f59e0b" strokeWidth="8" strokeDasharray="20 213" strokeDashoffset="-180" strokeLinecap="round" />
+                  </svg>
+                  <div className="donut-labels">
+                    <span className="lbl-val val-top">200</span>
+                    <span className="lbl-val val-right">300</span>
+                    <span className="lbl-val val-bottom">300</span>
+                    <span className="lbl-val val-left">200</span>
                   </div>
-                  <div className="mock-table">
-                    <div className="mock-table-row header"><span>Bill #</span><span>Items</span><span>Total</span></div>
-                    <div className="mock-table-row"><span>BILL-00042</span><span>Atta, Milk, Salt</span><span>₹368.00</span></div>
-                    <div className="mock-table-row"><span>BILL-00041</span><span>Classmate Notebook x2</span><span>₹130.00</span></div>
+                </div>
+              </div>
+
+              <div className="landing-card card-spending-frequency">
+                <span className="card-label">Spending frequency</span>
+                <div className="line-chart-wrapper">
+                  <svg viewBox="0 0 180 80" className="line-chart-svg">
+                    <path d="M 10 55 C 30 20, 50 45, 70 25 C 90 10, 110 35, 130 15 C 150 45, 160 30, 170 35" fill="none" stroke="#f3c68f" strokeWidth="3.5" strokeLinecap="round" />
+                  </svg>
+                  <div className="chart-x-labels">
+                    <span>MON</span><span>TUE</span><span>WED</span><span className="active">THU</span><span>FRI</span><span>SAT</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="landing-card card-weekly-plan">
+                <span className="card-label">Weekly plan</span>
+                <div className="area-chart-wrapper">
+                  <svg viewBox="0 0 340 120" className="area-chart-svg">
+                    <line x1="10" y1="20" x2="330" y2="20" stroke="#262626" strokeWidth="1" strokeDasharray="3 3" />
+                    <line x1="10" y1="55" x2="330" y2="55" stroke="#262626" strokeWidth="1" strokeDasharray="3 3" />
+                    <line x1="10" y1="90" x2="330" y2="90" stroke="#262626" strokeWidth="1" strokeDasharray="3 3" />
+                    {/* Filled Area */}
+                    <path d="M 10 120 C 50 110, 80 80, 120 95 C 160 110, 200 65, 240 50 C 280 35, 310 70, 330 120 Z" fill="rgba(243, 198, 143, 0.12)" />
+                    {/* Top Path */}
+                    <path d="M 10 120 C 50 110, 80 80, 120 95 C 160 110, 200 65, 240 50 C 280 35, 310 70, 330 120" fill="none" stroke="#f3c68f" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                  <div className="chart-x-labels-long">
+                    <span>AUG 21</span><span>AUG 22</span><span>AUG 23</span><span className="active">AUG 24</span><span>AUG 25</span><span>AUG 26</span>
                   </div>
                 </div>
               </div>

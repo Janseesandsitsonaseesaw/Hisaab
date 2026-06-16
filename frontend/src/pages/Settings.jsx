@@ -416,7 +416,7 @@ export default function Settings({
                         gap: "4px",
                         padding: "4px"
                       }}>
-                        <div style={{ height: "6px", width: "12px", background: "#3b82f6", borderRadius: "2px" }} />
+                        <div style={{ height: "6px", width: "12px", background: option.id === "dark" ? "#a78bfa" : "#8b5cf6", borderRadius: "2px" }} />
                         <div style={{ height: "4px", width: "16px", background: "var(--text-tertiary)", borderRadius: "1px", opacity: 0.3 }} />
                         <div style={{ height: "4px", width: "14px", background: "var(--text-tertiary)", borderRadius: "1px", opacity: 0.3 }} />
                       </div>
