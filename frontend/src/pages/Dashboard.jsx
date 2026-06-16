@@ -27,7 +27,7 @@ function getStockSeverity(stock) {
   return                  { label: "Low",      cls: "badge-warning" };
 }
 
-export default function Dashboard({ store, dashboard, sales, setActiveTab, setEditingProduct, setEditingCustomer, setEditingPurchase, chartTab, setChartTab }) {
+export default function Dashboard({ store, dashboard, sales, dashboardLoading, setActiveTab, setEditingProduct, setEditingCustomer, setEditingPurchase, chartTab, setChartTab }) {
   const todayStr    = new Date().toDateString();
   const todaysSales = sales.filter((s) => new Date(s.created_at).toDateString() === todayStr);
   const ordersToday = todaysSales.length;
@@ -100,15 +100,15 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
 
       {/* KPI Grid */}
       <div className="kpi-grid" style={{ marginBottom: "24px" }}>
-        <StatCard title="Today's Sales" icon={Receipt} value={fmt(dashboard.today_sales)} trend={safeNum(dashboard.today_sales) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.today_sales) > 0 ? "Sales today" : "No sales yet"} colorClass="kpi-icon-primary" sub={`${ordersToday} orders placed`} />
-        <StatCard title="Today's Profit" icon={TrendingUp} value={fmt(dashboard.today_profit)} trend={safeNum(dashboard.today_profit) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.today_profit) > 0 ? "Earning today" : "No profit yet"} colorClass="kpi-icon-success" sub={`${dashboard.today_sales > 0 ? Math.round((dashboard.today_profit / dashboard.today_sales) * 100) : 0}% margin`} />
-        <StatCard title="Monthly Revenue" icon={CalendarDays} value={fmt(safeNum(dashboard.monthly_sales))} trend={safeNum(dashboard.monthly_sales) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.monthly_sales) > 0 ? "This month" : "No revenue yet"} colorClass="kpi-icon-primary" sub="Current month" />
-        <StatCard title="Orders Today" icon={ShoppingCart} value={ordersToday} trend={ordersToday > 0 ? "up" : "neutral"} trendValue={ordersToday > 0 ? "Active today" : "No orders yet"} colorClass="kpi-icon-primary" sub="Bills generated" />
-        <StatCard title="Avg Bill Value" icon={BarChart2} value={fmt(avgBillValue)} trend="neutral" trendValue="Per transaction" colorClass="kpi-icon-success" sub={`Based on ${ordersToday} order${ordersToday !== 1 ? "s" : ""}`} />
-        <StatCard title="Best Seller" icon={Star} value={dashboard.top_selling_products[0]?.name || "—"} trend="up" trendValue="Top product today" colorClass="kpi-icon-warning" sub={dashboard.top_selling_products[0] ? `${safeNum(dashboard.top_selling_products[0].quantity)} units sold` : "No sales yet"} isText />
-        <StatCard title="Total Products" icon={Package} value={safeNum(dashboard.total_products)} trend="neutral" trendValue="Active catalog" colorClass="kpi-icon-primary" sub={`${healthyCnt} healthy`} />
-        <StatCard title="Low Stock Items" icon={AlertCircle} value={lowStockList.length} trend={lowStockList.length > 5 ? "down" : "neutral"} trendValue="Needs attention" colorClass={lowStockList.length > 0 ? "kpi-icon-danger" : "kpi-icon-warning"} sub={`${outOfStockCnt} out of stock`} />
-        <StatCard title="Outstanding Udhaar" icon={Wallet} value={fmt(safeNum(dashboard.total_udhaar_outstanding))} trend={safeNum(dashboard.total_udhaar_outstanding) > 0 ? "down" : "neutral"} trendValue={`${safeNum(dashboard.total_customers)} customers`} colorClass="kpi-icon-warning" sub="Collection pending" />
+        <StatCard title="Today's Sales" icon={Receipt} value={fmt(dashboard.today_sales)} trend={safeNum(dashboard.today_sales) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.today_sales) > 0 ? "Sales today" : "No sales yet"} colorClass="kpi-icon-primary" sub={`${ordersToday} orders placed`} loading={dashboardLoading} />
+        <StatCard title="Today's Profit" icon={TrendingUp} value={fmt(dashboard.today_profit)} trend={safeNum(dashboard.today_profit) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.today_profit) > 0 ? "Earning today" : "No profit yet"} colorClass="kpi-icon-success" sub={`${dashboard.today_sales > 0 ? Math.round((dashboard.today_profit / dashboard.today_sales) * 100) : 0}% margin`} loading={dashboardLoading} />
+        <StatCard title="Monthly Revenue" icon={CalendarDays} value={fmt(safeNum(dashboard.monthly_sales))} trend={safeNum(dashboard.monthly_sales) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.monthly_sales) > 0 ? "This month" : "No revenue yet"} colorClass="kpi-icon-primary" sub="Current month" loading={dashboardLoading} />
+        <StatCard title="Orders Today" icon={ShoppingCart} value={ordersToday} trend={ordersToday > 0 ? "up" : "neutral"} trendValue={ordersToday > 0 ? "Active today" : "No orders yet"} colorClass="kpi-icon-primary" sub="Bills generated" loading={dashboardLoading} />
+        <StatCard title="Avg Bill Value" icon={BarChart2} value={fmt(avgBillValue)} trend="neutral" trendValue="Per transaction" colorClass="kpi-icon-success" sub={`Based on ${ordersToday} order${ordersToday !== 1 ? "s" : ""}`} loading={dashboardLoading} />
+        <StatCard title="Best Seller" icon={Star} value={dashboard.top_selling_products[0]?.name || "—"} trend="up" trendValue="Top product today" colorClass="kpi-icon-warning" sub={dashboard.top_selling_products[0] ? `${safeNum(dashboard.top_selling_products[0].quantity)} units sold` : "No sales yet"} isText loading={dashboardLoading} />
+        <StatCard title="Total Products" icon={Package} value={safeNum(dashboard.total_products)} trend="neutral" trendValue="Active catalog" colorClass="kpi-icon-primary" sub={`${healthyCnt} healthy`} loading={dashboardLoading} />
+        <StatCard title="Low Stock Items" icon={AlertCircle} value={lowStockList.length} trend={lowStockList.length > 5 ? "down" : "neutral"} trendValue="Needs attention" colorClass={lowStockList.length > 0 ? "kpi-icon-danger" : "kpi-icon-warning"} sub={`${outOfStockCnt} out of stock`} loading={dashboardLoading} />
+        <StatCard title="Outstanding Udhaar" icon={Wallet} value={fmt(safeNum(dashboard.total_udhaar_outstanding))} trend={safeNum(dashboard.total_udhaar_outstanding) > 0 ? "down" : "neutral"} trendValue={`${safeNum(dashboard.total_customers)} customers`} colorClass="kpi-icon-warning" sub="Collection pending" loading={dashboardLoading} />
       </div>
 
       <div className="dashboard-v2-grid">
@@ -126,7 +126,15 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
             </div>
             <div className="card-body">
               <div style={{ height: "280px" }}>
-                {hasChartData ? (
+                {dashboardLoading ? (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: "16px" }}>
+                    <div className="spinner-sm" style={{ width: "32px", height: "32px" }} />
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ margin: 0, fontSize: "14px", color: "var(--text-secondary)", fontWeight: 600 }}>Loading analytics...</p>
+                      <p style={{ margin: "4px 0 0", fontSize: "12px", color: "var(--text-tertiary)" }}>Fetching your sales data</p>
+                    </div>
+                  </div>
+                ) : hasChartData ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={weekChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} barSize={30}>
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--text-secondary)" }} />
@@ -156,7 +164,13 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
               <span className="badge badge-neutral">This week</span>
             </div>
             <div className="card-body">
-              {dashboard.top_selling_products.length > 0 ? (
+              {dashboardLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} className="shimmer" style={{ height: "48px", width: "100%", borderRadius: "8px" }} />
+                  ))}
+                </div>
+              ) : dashboard.top_selling_products.length > 0 ? (
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   {dashboard.top_selling_products.slice(0, 5).map((item, idx) => {
                     const maxQty   = dashboard.top_selling_products[0].quantity;
@@ -222,13 +236,26 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
           <div className="card">
             <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <h3 className="card-title" style={{ color: "var(--brand-primary)" }}>Today's Summary</h3>
-              <div className="summary-stat-row"><span>Gross Revenue</span><strong>{fmt(dashboard.today_sales)}</strong></div>
-              <div className="summary-stat-row"><span>Net Profit</span><strong>{fmt(dashboard.today_profit)}</strong></div>
-              <div className="summary-stat-row"><span>Orders</span><strong>{ordersToday}</strong></div>
-              <div className="summary-stat-row">
-                <span>Best Seller</span>
-                <strong style={{ fontSize: "0.8125rem" }}>{dashboard.top_selling_products[0]?.name || "—"}</strong>
-              </div>
+              {dashboardLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[1, 2, 3, 4].map((n) => (
+                    <div key={n} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div className="shimmer" style={{ height: "16px", width: "40%", borderRadius: "4px" }} />
+                      <div className="shimmer" style={{ height: "16px", width: "25%", borderRadius: "4px" }} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <div className="summary-stat-row"><span>Gross Revenue</span><strong>{fmt(dashboard.today_sales)}</strong></div>
+                  <div className="summary-stat-row"><span>Net Profit</span><strong>{fmt(dashboard.today_profit)}</strong></div>
+                  <div className="summary-stat-row"><span>Orders</span><strong>{ordersToday}</strong></div>
+                  <div className="summary-stat-row">
+                    <span>Best Seller</span>
+                    <strong style={{ fontSize: "0.8125rem" }}>{dashboard.top_selling_products[0]?.name || "—"}</strong>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -236,34 +263,49 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
           <div className="card">
             <div className="card-header">
               <h3 className="card-title">Inventory Health</h3>
-              <span className={`health-pct-badge ${healthPct >= 80 ? "health-good" : healthPct >= 50 ? "health-warn" : "health-bad"}`}>
-                {healthPct}%
-              </span>
+              {dashboardLoading ? (
+                <div className="shimmer" style={{ height: "20px", width: "40px", borderRadius: "10px" }} />
+              ) : (
+                <span className={`health-pct-badge ${healthPct >= 80 ? "health-good" : healthPct >= 50 ? "health-warn" : "health-bad"}`}>
+                  {healthPct}%
+                </span>
+              )}
             </div>
             <div className="card-body">
-              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "4px" }}>
-                <div style={{ width: "90px", height: "90px", flexShrink: 0 }}>
-                  <ResponsiveContainer>
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: "Healthy",      value: Math.max(healthyCnt, 0) },
-                          { name: "Low Stock",    value: Math.max(lowStockCnt, 0) },
-                          { name: "Out of Stock", value: Math.max(outOfStockCnt, 0) },
-                        ]}
-                        innerRadius={28} outerRadius={42} paddingAngle={2} dataKey="value"
-                      >
-                        {DONUT_COLORS.map((c, i) => <Cell key={i} fill={c} />)}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
+              {dashboardLoading ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "4px" }}>
+                  <div className="shimmer" style={{ width: "90px", height: "90px", borderRadius: "50%", flexShrink: 0 }} />
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {[1, 2, 3].map((n) => (
+                      <div key={n} className="shimmer" style={{ height: "24px", width: "100%", borderRadius: "12px" }} />
+                    ))}
+                  </div>
                 </div>
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <div className="inv-chip inv-chip-good"><span className="inv-dot" style={{ background: DONUT_COLORS[0] }} /><span>Healthy</span><strong>{healthyCnt}</strong></div>
-                  <div className="inv-chip inv-chip-warn"><span className="inv-dot" style={{ background: DONUT_COLORS[1] }} /><span>Low Stock</span><strong>{lowStockCnt}</strong></div>
-                  <div className="inv-chip inv-chip-bad"><span className="inv-dot" style={{ background: DONUT_COLORS[2] }} /><span>Out of Stock</span><strong>{outOfStockCnt}</strong></div>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "4px" }}>
+                  <div style={{ width: "90px", height: "90px", flexShrink: 0 }}>
+                    <ResponsiveContainer>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "Healthy",      value: Math.max(healthyCnt, 0) },
+                            { name: "Low Stock",    value: Math.max(lowStockCnt, 0) },
+                            { name: "Out of Stock", value: Math.max(outOfStockCnt, 0) },
+                          ]}
+                          innerRadius={28} outerRadius={42} paddingAngle={2} dataKey="value"
+                        >
+                          {DONUT_COLORS.map((c, i) => <Cell key={i} fill={c} />)}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div className="inv-chip inv-chip-good"><span className="inv-dot" style={{ background: DONUT_COLORS[0] }} /><span>Healthy</span><strong>{healthyCnt}</strong></div>
+                    <div className="inv-chip inv-chip-warn"><span className="inv-dot" style={{ background: DONUT_COLORS[1] }} /><span>Low Stock</span><strong>{lowStockCnt}</strong></div>
+                    <div className="inv-chip inv-chip-bad"><span className="inv-dot" style={{ background: DONUT_COLORS[2] }} /><span>Out of Stock</span><strong>{outOfStockCnt}</strong></div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -274,25 +316,39 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
               <Clock size={16} color="var(--text-tertiary)" />
             </div>
             <div className="card-body">
-              <div className="activity-feed">
-                {recentActivity.length > 0 ? recentActivity.map((act) => {
-                  const cfg = activityConfig[act.type] || activityConfig.bill;
-                  return (
-                    <div className="activity-item" key={act.id}>
-                      <div className="activity-icon" style={{ background: cfg.bg, color: cfg.color }}><cfg.icon size={15} /></div>
-                      <div className="activity-content">
-                        <div className="activity-title">{act.title}</div>
-                        <div className="activity-time">{act.time}</div>
+              {dashboardLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                      <div className="shimmer" style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div className="shimmer" style={{ height: "14px", width: "70%", borderRadius: "4px" }} />
+                        <div className="shimmer" style={{ height: "10px", width: "40%", borderRadius: "4px" }} />
                       </div>
                     </div>
-                  );
-                }) : (
-                  <div style={{ textAlign: "center", padding: "16px 0" }}>
-                    <Clock size={28} color="var(--text-tertiary)" style={{ marginBottom: "8px" }} />
-                    <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)" }}>No recent activity yet</p>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="activity-feed">
+                  {recentActivity.length > 0 ? recentActivity.map((act) => {
+                    const cfg = activityConfig[act.type] || activityConfig.bill;
+                    return (
+                      <div className="activity-item" key={act.id}>
+                        <div className="activity-icon" style={{ background: cfg.bg, color: cfg.color }}><cfg.icon size={15} /></div>
+                        <div className="activity-content">
+                          <div className="activity-title">{act.title}</div>
+                          <div className="activity-time">{act.time}</div>
+                        </div>
+                      </div>
+                    );
+                  }) : (
+                    <div style={{ textAlign: "center", padding: "16px 0" }}>
+                      <Clock size={28} color="var(--text-tertiary)" style={{ marginBottom: "8px" }} />
+                      <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)" }}>No recent activity yet</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -303,7 +359,19 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
               <Truck size={16} color="var(--text-tertiary)" />
             </div>
             <div className="card-body">
-              {(dashboard.recent_purchases || []).length > 0 ? (
+              {dashboardLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                      <div className="shimmer" style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div className="shimmer" style={{ height: "14px", width: "60%", borderRadius: "4px" }} />
+                        <div className="shimmer" style={{ height: "10px", width: "40%", borderRadius: "4px" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (dashboard.recent_purchases || []).length > 0 ? (
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   {(dashboard.recent_purchases || []).slice(0, 4).map((p) => (
                     <div className="purchase-item" key={p.id}>
@@ -332,7 +400,19 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
               <IndianRupee size={16} color="var(--text-tertiary)" />
             </div>
             <div className="card-body">
-              {(dashboard.recent_udhaar || []).length > 0 ? (
+              {dashboardLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                      <div className="shimmer" style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div className="shimmer" style={{ height: "14px", width: "65%", borderRadius: "4px" }} />
+                        <div className="shimmer" style={{ height: "10px", width: "35%", borderRadius: "4px" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (dashboard.recent_udhaar || []).length > 0 ? (
                 <div className="activity-feed">
                   {(dashboard.recent_udhaar || []).slice(0, 4).map((u) => {
                     const isCredit = u.type === "credit";
@@ -366,7 +446,19 @@ export default function Dashboard({ store, dashboard, sales, setActiveTab, setEd
               </h3>
             </div>
             <div className="card-body" style={{ padding: "0" }}>
-              {lowStockList.length > 0 ? (
+              {dashboardLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "16px" }}>
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div className="shimmer" style={{ height: "14px", width: "50%", borderRadius: "4px" }} />
+                        <div className="shimmer" style={{ height: "10px", width: "30%", borderRadius: "4px" }} />
+                      </div>
+                      <div className="shimmer" style={{ height: "20px", width: "50px", borderRadius: "10px" }} />
+                    </div>
+                  ))}
+                </div>
+              ) : lowStockList.length > 0 ? (
                 <div className="item-list">
                   {lowStockList.slice(0, 4).map((item) => {
                     const sev = getStockSeverity(item.stock);

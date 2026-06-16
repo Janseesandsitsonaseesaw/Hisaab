@@ -146,6 +146,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
   const [products,         setProducts]         = useState([]);
   const [sales,            setSales]            = useState([]);
   const [dashboard,        setDashboard]        = useState({ total_products: 0, low_stock_products: [], top_selling_products: [], today_sales: 0, today_profit: 0, weekly_sales: 0, monthly_sales: 0, total_customers: 0, total_udhaar_outstanding: 0, recent_purchases: [], recent_udhaar: [] });
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const [cart,             setCart]             = useState([]);
   const [productQuery,     setProductQuery]     = useState("");
   const [historyQuery,     setHistoryQuery]     = useState("");
@@ -300,6 +301,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
 
     try {
       setStoreFetchStatus("loading");
+      setDashboardLoading(true);
       const storeData = await api("/store");
       setStore(storeData);
       setStoreFetchStatus("success");
@@ -318,6 +320,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
         setDashboard(dashboardData);
         setCustomers(customerData);
         setPurchases(purchaseData);
+        setDashboardLoading(false);
       });
 
       return storeData;
@@ -1628,6 +1631,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
               store={store}
               dashboard={dashboard}
               sales={sales}
+              dashboardLoading={dashboardLoading}
               setActiveTab={setActiveTab}
               setEditingProduct={setEditingProduct}
               setEditingCustomer={setEditingCustomer}
