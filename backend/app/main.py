@@ -775,6 +775,16 @@ def delete_customer(customer_id: str, user_id: str = Depends(get_current_user_id
     supabase.table("customers").delete().eq("id", customer_id).eq("user_id", user_id).execute()
     return {"status": "success"}
 
+
+@app.get("/customers/{customer_id}/udhaar")
+def get_customer_udhaar(customer_id: str, user_id: str = Depends(get_current_user_id)) -> list[dict]:
+    # Check if customer exists
+    cust = supabase.table("customers").select("id").eq("id", customer_id).eq("user_id", user_id).execute().data
+    if not cust:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    entries = supabase.table("udhaar").select("*").eq("customer_id", customer_id).eq("user_id", user_id).order("created_at", desc=True).execute().data or []
+    return entries
+
 @app.post("/udhaar")
 def create_udhaar(payload: UdhaarEntryIn, user_id: str = Depends(get_current_user_id)) -> dict:
     if payload.type not in ("credit", "payment"):
