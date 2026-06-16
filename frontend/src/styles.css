@@ -3444,7 +3444,33 @@ a { text-decoration: none; color: inherit; }
    COLLAPSIBLE SIDEBAR LAYOUT
    ============================================================ */
 .sidebar {
+  position: relative;
   transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+}
+
+/* Sidebar Toggle Button styling */
+.sidebar-toggle-btn {
+  position: absolute;
+  right: -12px;
+  top: 18px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--sidebar-border);
+  background-color: var(--bg-secondary);
+  color: var(--sidebar-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+.sidebar-toggle-btn:hover {
+  background-color: var(--sidebar-bg-hover);
+  color: var(--sidebar-text-active);
+  transform: scale(1.05);
 }
 
 @media (min-width: 769px) {
@@ -3464,6 +3490,7 @@ a { text-decoration: none; color: inherit; }
   .sidebar.collapsed .brand {
     justify-content: center;
     gap: 0;
+    width: 100%;
   }
   
   .sidebar.collapsed .nav-item {
@@ -3476,6 +3503,7 @@ a { text-decoration: none; color: inherit; }
     justify-content: center;
     padding: 10px 0;
     gap: 0;
+    width: 100%;
   }
   
   .sidebar.collapsed .sidebar-header {
@@ -3485,27 +3513,6 @@ a { text-decoration: none; color: inherit; }
   
   .sidebar.collapsed .sidebar-footer {
     padding: 10px;
-  }
-  
-  /* Sidebar Toggle Button styling */
-  .sidebar-toggle-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 1px solid var(--sidebar-border);
-    background-color: var(--sidebar-bg);
-    color: var(--sidebar-text);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: var(--shadow-sm);
-  }
-  .sidebar-toggle-btn:hover {
-    background-color: var(--sidebar-bg-hover);
-    color: var(--sidebar-text-active);
-    transform: scale(1.05);
   }
 
   /* Premium Tooltip styling */
@@ -3533,4 +3540,19 @@ a { text-decoration: none; color: inherit; }
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+/* ============================================================
+   SMOOTH COLLAPSIBLE ACCORDION WRAPPER
+   ============================================================ */
+.collapsible-wrapper {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.3s ease;
+  opacity: 0;
+}
+
+.collapsible-wrapper.expanded {
+  max-height: 2000px;
+  opacity: 1;
 }

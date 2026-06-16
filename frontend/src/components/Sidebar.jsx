@@ -28,9 +28,9 @@ export default function Sidebar({ activeTab, setActiveTab, store, isSidebarOpen,
 
   return (
     <aside className={`sidebar ${isSidebarOpen ? "open" : ""} ${isCollapsed ? "collapsed" : ""}`}>
-      <div className="sidebar-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-        <div className="brand" onClick={() => nav("dashboard")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "10px" }}>
-          <div className="brand-icon" style={{ flexShrink: 0 }}>
+      <div className="sidebar-header">
+        <div className="brand" onClick={() => nav("dashboard")} style={{ cursor: "pointer" }}>
+          <div className="brand-icon">
             {store?.logo_data_url ? (
               <img src={store.logo_data_url} alt="Logo" />
             ) : (
@@ -44,7 +44,6 @@ export default function Sidebar({ activeTab, setActiveTab, store, isSidebarOpen,
           className="sidebar-toggle-btn" 
           onClick={() => setIsCollapsed(!isCollapsed)}
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          style={{ marginLeft: isCollapsed ? "0" : "8px" }}
         >
           {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>

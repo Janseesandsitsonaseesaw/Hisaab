@@ -58,6 +58,7 @@ export default function Inventory({ products, filteredProducts, editingProduct, 
   const [savingCategories, setSavingCategories] = useState(false);
   const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(false);
   const [isProductsExpanded, setIsProductsExpanded] = useState(true);
+  const [localEditingProduct, setLocalEditingProduct] = useState(null);
 
   // Inventory-level search + category filter
   const [invSearch, setInvSearch] = useState("");
@@ -85,10 +86,169 @@ export default function Inventory({ products, filteredProducts, editingProduct, 
   const allCategories = getCategoriesForStore(store?.store_category, extraCategories, removedCategories);
 
   useEffect(() => {
-    setSelectedCategory(editingProduct?.category || "");
-    setFormBarcode(editingProduct?.barcode || "");
-    setFormScannerOn(false);
-  }, [editingProduct?.id]);
+    if (editingProduct) {
+      setLocalEditingProduct(editingProduct);
+      setIsProductsExpanded(true);
+      setSelectedCategory(editingProduct.category || "");
+      setFormBarcode(editingProduct.barcode || "");
+    } else {
+      setIsProductsExpanded(false);
+      const timer = setTimeout(() => {
+        setLocalEditingProduct(null);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [editingProduct]);
+
+  const closeEdit = () => {
+    setIsProductsExpanded(false);
+    setTimeout(() => {
+      setEditingProduct(null);
+      setLocalEditingProduct(null);
+    }, 300);
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await saveProduct(e);
+      setIsProductsExpanded(false);
+      setTimeout(() => {
+        setLocalEditingProduct(null);
+      }, 300);
+    } catch (err) {
+      console.error("Failed to save product:", err);
+    }
+  };
+
+  function renderProductForm(targetProduct) {
+    return (
+      <form onSubmit={handleFormSubmit}>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Product Name</label>
+            <input className="form-input" required name="name" defaultValue={targetProduct.name || ""} />
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Barcode</label>
+            <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+              <input
+                className="form-input"
+                name="barcode"
+                placeholder="Enter barcode or scan/generate…"
+                value={formBarcode}
+                onChange={(e) => setFormBarcode(e.target.value)}
+                style={{ flex: 1, minWidth: "140px" }}
+              />
+              <button type="button" className="btn btn-secondary btn-sm" style={{ height: "40px", display: "flex", alignItems: "center", gap: "5px", whiteSpace: "nowrap" }}
+                onClick={() => {
+                  setFormScannerOn(true);
+                  setTimeout(async () => {
+                    try {
+                      if (!zxingRef.current) zxingRef.current = new BrowserMultiFormatReader();
+                      const video = formVideoRef.current;
+                      if (!video) { setFormScannerOn(false); return; }
+                      await zxingRef.current.decodeFromVideoDevice(undefined, video, (result, err) => {
+                        if (result) {
+                          setFormBarcode(result.getText());
+                          setFormScannerOn(false);
+                          if (zxingRef.current) try { zxingRef.current.reset(); } catch {}
+                          if (showNotice) showNotice(`Barcode scanned: ${result.getText()}`);
+                        }
+                        if (err && err.name !== "NotFoundException") console.error(err);
+                      });
+                    } catch (err) { if (showNotice) showNotice(`Camera error: ${err.message}`, "error"); setFormScannerOn(false); }
+                  }, 100);
+                }}
+              >
+                <Camera size={15} /> Scan
+              </button>
+              <button type="button" className="btn btn-secondary btn-sm" style={{ height: "40px", display: "flex", alignItems: "center", gap: "5px", whiteSpace: "nowrap" }}
+                onClick={() => {
+                  const code = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("");
+                  setFormBarcode(code);
+                  if (showNotice) showNotice(`Barcode generated: ${code}`);
+                }}
+              >
+                ↺ Generate
+              </button>
+            </div>
+            {formScannerOn && (
+              <div style={{ marginTop: "8px", position: "relative", borderRadius: "10px", overflow: "hidden", border: "2px solid var(--brand-primary)" }}>
+                <video ref={formVideoRef} style={{ width: "100%", maxHeight: "180px", objectFit: "cover", display: "block" }} muted playsInline />
+                <button type="button" className="btn btn-danger btn-sm" style={{ position: "absolute", top: "8px", right: "8px", zIndex: 2 }}
+                  onClick={() => { setFormScannerOn(false); if (zxingRef.current) try { zxingRef.current.reset(); } catch {} }}
+                >
+                  <X size={14} /> Stop
+                </button>
+              </div>
+            )}
+            {formBarcode && (
+              <small style={{ marginTop: "4px", display: "block", color: "var(--text-secondary)" }}>Barcode: <strong>{formBarcode}</strong></small>
+            )}
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Category</label>
+            <div style={{ display: "flex", gap: "8px", alignItems: "flex-start", flexWrap: "wrap" }}>
+              <select className="form-input" required name="category" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} style={{ flex: 1, minWidth: "140px" }}>
+                <option value="" disabled>Select category…</option>
+                {allCategories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+              </select>
+              <button type="button" onClick={() => setShowAddCategory((v) => !v)} style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: "5px", padding: "0 14px", height: "40px", borderRadius: "8px", border: "1.5px solid var(--brand-primary-hover)", background: "var(--brand-primary-soft)", color: "#60a5fa", cursor: "pointer", fontWeight: 600, fontSize: "13px", whiteSpace: "nowrap" }}>
+                <Plus size={15} /> Add
+              </button>
+            </div>
+            {showAddCategory && (
+              <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                <input className="form-input" placeholder="New category name…" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCategory(); } }} autoFocus style={{ flex: 1 }} />
+                <button type="button" className="btn btn-primary btn-sm" onClick={addCategory} disabled={savingCategories || !newCategoryName.trim()}>Add</button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setShowAddCategory(false); setNewCategoryName(""); }}>Cancel</button>
+              </div>
+            )}
+          </div>
+          <div className="form-group">
+            <label className="form-label">Stock Quantity</label>
+            <input className="form-input" required type="number" min="0" name="stock" defaultValue={targetProduct.stock || ""} />
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Cost Price (₹)</label>
+            <input className="form-input" required type="number" min="0" step="0.01" name="cost_price" defaultValue={targetProduct.cost_price || ""} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Selling Price (₹)</label>
+            <input className="form-input" required type="number" min="0" step="0.01" name="selling_price" defaultValue={targetProduct.selling_price || ""} />
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Unit</label>
+            <select className="form-input" name="unit" defaultValue={targetProduct.unit || "Piece"}>
+              <option value="Piece">Piece</option>
+              <option value="Kg">Kg</option>
+              <option value="Gram">Gram</option>
+              <option value="Litre">Litre</option>
+            </select>
+          </div>
+          <div className="form-group" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "4px" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "14px" }}>
+              <input type="checkbox" name="variable_price" defaultChecked={!!targetProduct.variable_price} style={{ width: "16px", height: "16px", accentColor: "var(--brand-primary-hover)" }} />
+              Price varies (fruits / veg)
+            </label>
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "16px" }}>
+          <button type="button" className="btn btn-secondary" onClick={closeEdit}>Cancel</button>
+          <button type="submit" className="btn btn-primary">Save Product</button>
+        </div>
+      </form>
+    );
+  }
 
   // Stats
   const inventoryValue = useMemo(() =>
@@ -383,143 +543,20 @@ export default function Inventory({ products, filteredProducts, editingProduct, 
         ))}
       </div>
 
-      {editingProduct && (
+      {localEditingProduct && !localEditingProduct.id && (
         <div className="card" style={{ marginBottom: "24px" }}>
           <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }} onClick={() => setIsProductsExpanded(!isProductsExpanded)}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               {isProductsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-              <h3 className="card-title">{editingProduct.id ? "Edit Product" : "New Product"}</h3>
+              <h3 className="card-title">New Product</h3>
             </div>
-            <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setEditingProduct(null); }}>Cancel</button>
+            <button className="btn btn-ghost btn-sm" onClick={closeEdit}>Cancel</button>
           </div>
-          {isProductsExpanded && (
+          <div className={`collapsible-wrapper ${isProductsExpanded ? "expanded" : ""}`}>
             <div className="card-body">
-              <form onSubmit={saveProduct}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Product Name</label>
-                  <input className="form-input" required name="name" defaultValue={editingProduct.name || ""} />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Barcode</label>
-                  <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
-                    <input
-                      className="form-input"
-                      name="barcode"
-                      placeholder="Enter barcode or scan/generate…"
-                      value={formBarcode}
-                      onChange={(e) => setFormBarcode(e.target.value)}
-                      style={{ flex: 1, minWidth: "140px" }}
-                    />
-                    <button type="button" className="btn btn-secondary btn-sm" style={{ height: "40px", display: "flex", alignItems: "center", gap: "5px", whiteSpace: "nowrap" }}
-                      onClick={() => {
-                        setFormScannerOn(true);
-                        setTimeout(async () => {
-                          try {
-                            if (!zxingRef.current) zxingRef.current = new BrowserMultiFormatReader();
-                            const video = formVideoRef.current;
-                            if (!video) { setFormScannerOn(false); return; }
-                            await zxingRef.current.decodeFromVideoDevice(undefined, video, (result, err) => {
-                              if (result) {
-                                setFormBarcode(result.getText());
-                                setFormScannerOn(false);
-                                if (zxingRef.current) try { zxingRef.current.reset(); } catch {}
-                                if (showNotice) showNotice(`Barcode scanned: ${result.getText()}`);
-                              }
-                              if (err && err.name !== "NotFoundException") console.error(err);
-                            });
-                          } catch (err) { if (showNotice) showNotice(`Camera error: ${err.message}`, "error"); setFormScannerOn(false); }
-                        }, 100);
-                      }}
-                    >
-                      <Camera size={15} /> Scan
-                    </button>
-                    <button type="button" className="btn btn-secondary btn-sm" style={{ height: "40px", display: "flex", alignItems: "center", gap: "5px", whiteSpace: "nowrap" }}
-                      onClick={() => {
-                        const code = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join("");
-                        setFormBarcode(code);
-                        if (showNotice) showNotice(`Barcode generated: ${code}`);
-                      }}
-                    >
-                      ↺ Generate
-                    </button>
-                  </div>
-                  {formScannerOn && (
-                    <div style={{ marginTop: "8px", position: "relative", borderRadius: "10px", overflow: "hidden", border: "2px solid var(--brand-primary)" }}>
-                      <video ref={formVideoRef} style={{ width: "100%", maxHeight: "180px", objectFit: "cover", display: "block" }} muted playsInline />
-                      <button type="button" className="btn btn-danger btn-sm" style={{ position: "absolute", top: "8px", right: "8px", zIndex: 2 }}
-                        onClick={() => { setFormScannerOn(false); if (zxingRef.current) try { zxingRef.current.reset(); } catch {} }}
-                      >
-                        <X size={14} /> Stop
-                      </button>
-                    </div>
-                  )}
-                  {formBarcode && (
-                    <small style={{ marginTop: "4px", display: "block", color: "var(--text-secondary)" }}>Barcode: <strong>{formBarcode}</strong></small>
-                  )}
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Category</label>
-                  <div style={{ display: "flex", gap: "8px", alignItems: "flex-start", flexWrap: "wrap" }}>
-                    <select className="form-input" required name="category" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} style={{ flex: 1, minWidth: "140px" }}>
-                      <option value="" disabled>Select category…</option>
-                      {allCategories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-                    </select>
-                    <button type="button" onClick={() => setShowAddCategory((v) => !v)} style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: "5px", padding: "0 14px", height: "40px", borderRadius: "8px", border: "1.5px solid var(--brand-primary-hover)", background: "var(--brand-primary-soft)", color: "#60a5fa", cursor: "pointer", fontWeight: 600, fontSize: "13px", whiteSpace: "nowrap" }}>
-                      <Plus size={15} /> Add
-                    </button>
-                  </div>
-                  {showAddCategory && (
-                    <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                      <input className="form-input" placeholder="New category name…" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCategory(); } }} autoFocus style={{ flex: 1 }} />
-                      <button type="button" className="btn btn-primary btn-sm" onClick={addCategory} disabled={savingCategories || !newCategoryName.trim()}>Add</button>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setShowAddCategory(false); setNewCategoryName(""); }}>Cancel</button>
-                    </div>
-                  )}
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Stock Quantity</label>
-                  <input className="form-input" required type="number" min="0" name="stock" defaultValue={editingProduct.stock || ""} />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Cost Price (₹)</label>
-                  <input className="form-input" required type="number" min="0" step="0.01" name="cost_price" defaultValue={editingProduct.cost_price || ""} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Selling Price (₹)</label>
-                  <input className="form-input" required type="number" min="0" step="0.01" name="selling_price" defaultValue={editingProduct.selling_price || ""} />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Unit</label>
-                  <select className="form-input" name="unit" defaultValue={editingProduct.unit || "Piece"}>
-                    <option value="Piece">Piece</option>
-                    <option value="Kg">Kg</option>
-                    <option value="Gram">Gram</option>
-                    <option value="Litre">Litre</option>
-                  </select>
-                </div>
-                <div className="form-group" style={{ display: "flex", alignItems: "flex-end", paddingBottom: "4px" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "14px" }}>
-                    <input type="checkbox" name="variable_price" defaultChecked={!!editingProduct.variable_price} style={{ width: "16px", height: "16px", accentColor: "var(--brand-primary-hover)" }} />
-                    Price varies (fruits / veg)
-                  </label>
-                </div>
-              </div>
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "16px" }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setEditingProduct(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Product</button>
-              </div>
-            </form>
+              {renderProductForm(localEditingProduct)}
+            </div>
           </div>
-          )}
         </div>
       )}
 
@@ -537,7 +574,7 @@ export default function Inventory({ products, filteredProducts, editingProduct, 
             )}
           </div>
         </div>
-        {isCategoriesExpanded && (
+        <div className={`collapsible-wrapper ${isCategoriesExpanded ? "expanded" : ""}`}>
           <div className="card-body" style={{ padding: "24px" }}>
           {allCategories.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -585,7 +622,7 @@ export default function Inventory({ products, filteredProducts, editingProduct, 
             All categories can be renamed or deleted. Products in a deleted category will be reassigned.
           </p>
         </div>
-        )}
+        </div>
       </div>
 
       <div className="card">
@@ -606,64 +643,80 @@ export default function Inventory({ products, filteredProducts, editingProduct, 
                 </tr>
               </thead>
               <tbody>
-                {tableProducts.map((product) => (
-                  <tr key={product.id} className={selectedIds[product.id] ? "row-selected" : ""}>
-                    <td>
-                      <input type="checkbox" className="label-checkbox" checked={!!selectedIds[product.id]} onChange={() => toggleSelectOne(product.id)} />
-                    </td>
-                    <td>
-                      <div className="td-product">
-                        <div
-                          className="prod-thumb"
-                          style={{ background: thumbColor(product.name) }}
-                          title={product.name}
-                        >
-                          {thumbInitials(product.name)}
-                        </div>
-                        <div className="product-details">
-                          <strong style={{ fontSize: "14px", fontWeight: "600", color: "var(--text-primary)" }}>{product.name}</strong>
-                          <div style={{ marginTop: "4px" }}>
-                            {product.barcode ? (
-                              <span className="badge badge-success" style={{ fontSize: "10px", padding: "2px 6px" }}>Barcode: {product.barcode}</span>
-                            ) : (
-                              <span className="badge badge-warning" style={{ fontSize: "10px", padding: "2px 6px" }}>No Barcode</span>
-                            )}
+                {tableProducts.map((product) => {
+                  const isThisEditing = localEditingProduct && localEditingProduct.id === product.id;
+                  return (
+                    <React.Fragment key={product.id}>
+                      <tr className={selectedIds[product.id] ? "row-selected" : ""}>
+                        <td>
+                          <input type="checkbox" className="label-checkbox" checked={!!selectedIds[product.id]} onChange={() => toggleSelectOne(product.id)} />
+                        </td>
+                        <td>
+                          <div className="td-product">
+                            <div
+                              className="prod-thumb"
+                              style={{ background: thumbColor(product.name) }}
+                              title={product.name}
+                            >
+                              {thumbInitials(product.name)}
+                            </div>
+                            <div className="product-details">
+                              <strong style={{ fontSize: "14px", fontWeight: "600", color: "var(--text-primary)" }}>{product.name}</strong>
+                              <div style={{ marginTop: "4px" }}>
+                                {product.barcode ? (
+                                  <span className="badge badge-success" style={{ fontSize: "10px", padding: "2px 6px" }}>Barcode: {product.barcode}</span>
+                                ) : (
+                                  <span className="badge badge-warning" style={{ fontSize: "10px", padding: "2px 6px" }}>No Barcode</span>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="badge badge-neutral" style={{ fontSize: "11px", fontWeight: "500", textTransform: "none", padding: "3px 8px" }}>{product.category}</span>
-                    </td>
-                    <td>{fmt(product.cost_price)}</td>
-                    <td>
-                      <strong style={{ color: "var(--brand-primary)", fontWeight: 700 }}>{fmt(product.selling_price)}</strong>
-                      {product.variable_price && <span style={{ marginLeft: "6px", fontSize: "11px", color: "var(--brand-primary)", fontWeight: 600 }}>Varies</span>}
-                    </td>
-                    <td>
-                      {product.stock === 0 ? (
-                        <span className="badge badge-danger">Out of stock</span>
-                      ) : product.stock <= 10 ? (
-                        <span className="badge badge-warning">{product.stock} low stock</span>
-                      ) : (
-                        <span className="badge badge-success">{product.stock} in stock</span>
+                        </td>
+                        <td>
+                          <span className="badge badge-neutral" style={{ fontSize: "11px", fontWeight: "500", textTransform: "none", padding: "3px 8px" }}>{product.category}</span>
+                        </td>
+                        <td>{fmt(product.cost_price)}</td>
+                        <td>
+                          <strong style={{ color: "var(--brand-primary)", fontWeight: 700 }}>{fmt(product.selling_price)}</strong>
+                          {product.variable_price && <span style={{ marginLeft: "6px", fontSize: "11px", color: "var(--brand-primary)", fontWeight: 600 }}>Varies</span>}
+                        </td>
+                        <td>
+                          {product.stock === 0 ? (
+                            <span className="badge badge-danger">Out of stock</span>
+                          ) : product.stock <= 10 ? (
+                            <span className="badge badge-warning">{product.stock} low stock</span>
+                          ) : (
+                            <span className="badge badge-success">{product.stock} in stock</span>
+                          )}
+                        </td>
+                        <td>
+                          <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end", alignItems: "center" }}>
+                            <button className="btn btn-ghost btn-sm" onClick={() => openScannerForProduct(product)} title="Scan barcode to assign" style={{ padding: "6px", borderRadius: "6px" }}>
+                              <Camera size={16} />
+                            </button>
+                            <button className="btn btn-ghost btn-sm" onClick={() => setEditingProduct(product)} title="Edit product" style={{ padding: "6px", borderRadius: "6px" }}>
+                              <Edit2 size={16} />
+                            </button>
+                            <button className="btn btn-ghost btn-sm text-danger" onClick={() => setProductToDelete(product)} title="Delete product" style={{ padding: "6px", borderRadius: "6px" }}>
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {isThisEditing && (
+                        <tr>
+                          <td colSpan={7} style={{ padding: 0, borderTop: "none", backgroundColor: "var(--bg-tertiary)" }}>
+                            <div className={`collapsible-wrapper ${isProductsExpanded ? "expanded" : ""}`}>
+                              <div style={{ padding: "20px 24px" }}>
+                                {renderProductForm(localEditingProduct)}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td>
-                      <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end", alignItems: "center" }}>
-                        <button className="btn btn-ghost btn-sm" onClick={() => openScannerForProduct(product)} title="Scan barcode to assign" style={{ padding: "6px", borderRadius: "6px" }}>
-                          <Camera size={16} />
-                        </button>
-                        <button className="btn btn-ghost btn-sm" onClick={() => setEditingProduct(product)} title="Edit product" style={{ padding: "6px", borderRadius: "6px" }}>
-                          <Edit2 size={16} />
-                        </button>
-                        <button className="btn btn-ghost btn-sm text-danger" onClick={() => setProductToDelete(product)} title="Delete product" style={{ padding: "6px", borderRadius: "6px" }}>
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

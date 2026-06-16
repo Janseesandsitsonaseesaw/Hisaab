@@ -295,26 +295,28 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
       const storeData = await api("/store");
       setStore(storeData);
       setStoreFetchStatus("success");
+      setAppLoading(false);
 
-      // Fetch other less critical elements in parallel with fallbacks
-      const [productData, salesData, dashboardData, customerData, purchaseData] = await Promise.all([
+      // Fetch other less critical elements in the background to ensure instantaneous load!
+      Promise.all([
         safeFetch("/products", []),
         safeFetch("/sales", []),
         safeFetch("/dashboard", { total_products: 0, low_stock_products: [], top_selling_products: [], today_sales: 0, today_profit: 0, weekly_sales: 0, monthly_sales: 0, total_customers: 0, total_udhaar_outstanding: 0, recent_purchases: [], recent_udhaar: [] }),
         safeFetch("/customers", []),
         safeFetch("/purchases", []),
-      ]);
-
-      setProducts(productData);
-      setSales(salesData);
-      setDashboard(dashboardData);
-      setCustomers(customerData);
-      setPurchases(purchaseData);
+      ]).then(([productData, salesData, dashboardData, customerData, purchaseData]) => {
+        setProducts(productData);
+        setSales(salesData);
+        setDashboard(dashboardData);
+        setCustomers(customerData);
+        setPurchases(purchaseData);
+      });
 
       return storeData;
     } catch (err) {
       console.error("Critical store profile load failed:", err);
       setStoreFetchStatus("error");
+      setAppLoading(false);
       throw err;
     }
   }
