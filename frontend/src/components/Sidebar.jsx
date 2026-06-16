@@ -2,7 +2,7 @@ import React from "react";
 import {
   LayoutDashboard, Receipt, Package, Hexagon,
   History as HistoryIcon, Settings, Users, Truck, Tag,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Sun, Moon,
 } from "lucide-react";
 
 function NavItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
@@ -18,7 +18,11 @@ function NavItem({ icon: Icon, label, isActive, onClick, isCollapsed }) {
   );
 }
 
-export default function Sidebar({ activeTab, setActiveTab, store, isSidebarOpen, setIsSidebarOpen, getInitials, setSelectedCustomer, isCollapsed, setIsCollapsed }) {
+export default function Sidebar({
+  activeTab, setActiveTab, store, isSidebarOpen, setIsSidebarOpen,
+  getInitials, setSelectedCustomer, isCollapsed, setIsCollapsed,
+  theme, toggleTheme
+}) {
   function nav(tab) {
     setActiveTab(tab);
     setIsSidebarOpen(false);
@@ -59,8 +63,34 @@ export default function Sidebar({ activeTab, setActiveTab, store, isSidebarOpen,
         <NavItem icon={Settings}        label="Settings"  isActive={activeTab === "settings"}  onClick={() => nav("settings")} isCollapsed={isCollapsed} />
       </nav>
 
-      <div className="sidebar-footer">
-        <div className="sidebar-store-card">
+      <div className="sidebar-footer" style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "12px 16px" }}>
+        <button 
+          type="button" 
+          className="theme-toggle-btn" 
+          onClick={toggleTheme}
+          title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            padding: "8px 12px",
+            borderRadius: "8px",
+            width: "100%",
+            color: "var(--text-secondary)",
+            fontSize: "0.875rem",
+            fontWeight: "500",
+            transition: "all 0.2s",
+            background: "var(--bg-tertiary)",
+            cursor: "pointer",
+            justifyContent: isCollapsed ? "center" : "flex-start",
+            border: "1px solid var(--border-color)"
+          }}
+        >
+          {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+          {!isCollapsed && <span>{theme === "light" ? "Dark Mode" : "Light Mode"}</span>}
+        </button>
+
+        <div className="sidebar-store-card" style={{ marginTop: "4px" }}>
           <div className="sidebar-avatar" style={{ flexShrink: 0 }}>
             {store?.logo_data_url ? (
               <img src={store.logo_data_url} alt="Logo" />

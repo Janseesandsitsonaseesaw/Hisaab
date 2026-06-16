@@ -31,42 +31,42 @@ function getInitials(name = "") {
 
 const themeVars = {
   light: {
-    primary: "#3b82f6",
-    hover: "#2563eb",
-    soft: "#eff6ff",
-    bgPrimary: "#f9fafb",
+    primary: "#8b5cf6",
+    hover: "#7c3aed",
+    soft: "#f5f3ff",
+    bgPrimary: "#fdfbf7",
     bgSecondary: "#ffffff",
-    bgTertiary: "#f3f4f6",
-    textPrimary: "#111827",
-    textSecondary: "#4b5563",
-    textTertiary: "#9ca3af",
+    bgTertiary: "#f7f5f0",
+    textPrimary: "#18181b",
+    textSecondary: "#52525b",
+    textTertiary: "#a1a1aa",
     sidebarBg: "#ffffff",
     sidebarBgHover: "#f4f4f5",
-    sidebarBgActive: "#eff6ff",
-    sidebarText: "#4b5563",
-    sidebarTextActive: "#3b82f6",
+    sidebarBgActive: "#f5f3ff",
+    sidebarText: "#52525b",
+    sidebarTextActive: "#8b5cf6",
     sidebarBorder: "#e4e4e7",
     borderColor: "#e4e4e7",
     borderColorHover: "#d4d4d8",
   },
   dark: {
-    primary: "#60a5fa",
-    hover: "#93c5fd",
-    soft: "rgba(96, 165, 250, 0.12)",
-    bgPrimary: "#0a0a0f",
-    bgSecondary: "#111118",
-    bgTertiary: "#1a1a24",
-    textPrimary: "#f1f5f9",
-    textSecondary: "#94a3b8",
-    textTertiary: "#64748b",
-    sidebarBg: "#111118",
-    sidebarBgHover: "#1a1a24",
-    sidebarBgActive: "rgba(96, 165, 250, 0.1)",
-    sidebarText: "#94a3b8",
-    sidebarTextActive: "#60a5fa",
-    sidebarBorder: "#1e1e2e",
-    borderColor: "#1e1e2e",
-    borderColorHover: "#2d2d3d",
+    primary: "#a78bfa",
+    hover: "#c084fc",
+    soft: "rgba(167, 139, 250, 0.1)",
+    bgPrimary: "#1e1e1e",
+    bgSecondary: "#262626",
+    bgTertiary: "#333333",
+    textPrimary: "#ffffff",
+    textSecondary: "#c7c7c7",
+    textTertiary: "#8c8c8c",
+    sidebarBg: "#1e1e1e",
+    sidebarBgHover: "#262626",
+    sidebarBgActive: "rgba(167, 139, 250, 0.15)",
+    sidebarText: "#c7c7c7",
+    sidebarTextActive: "#a78bfa",
+    sidebarBorder: "#2e2e2e",
+    borderColor: "#2e2e2e",
+    borderColorHover: "#3e3e3e",
   },
 };
 
@@ -115,6 +115,11 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
   }
 
   const [currentUser, setCurrentUser] = useState(null);
+  const [theme, setTheme] = useState(() => localStorage.getItem("hisaab_theme") || "light");
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   const [activeTab, setActiveTab] = useState(() => {
     const hash = window.location.hash.replace("#", "");
@@ -392,8 +397,15 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
   }, [currentUser, activeTab, appLoading]);
 
   useEffect(() => {
-    if (store?.theme_color) applyTheme(store.theme_color);
+    if (store?.theme_color && !localStorage.getItem("hisaab_theme")) {
+      setTheme(store.theme_color);
+    }
   }, [store?.theme_color]);
+
+  useEffect(() => {
+    applyTheme(theme);
+    localStorage.setItem("hisaab_theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     function handleGlobalKeyDown(e) {
@@ -1482,6 +1494,8 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
         setSelectedCustomer={setSelectedCustomer}
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={handleSetSidebarCollapsed}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
 
       <div className="main-wrapper">
@@ -1491,6 +1505,8 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
           setActiveTab={setActiveTab}
           productQuery={productQuery} setProductQuery={setProductQuery}
           historyQuery={historyQuery} setHistoryQuery={setHistoryQuery}
+          theme={theme}
+          toggleTheme={toggleTheme}
           customerQuery={customerQuery} setCustomerQuery={setCustomerQuery}
           purchaseQuery={purchaseQuery} setPurchaseQuery={setPurchaseQuery}
           lowStockList={lowStockList}
