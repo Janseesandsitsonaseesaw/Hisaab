@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Users, Plus, Edit2, Trash2, ChevronLeft, Phone, Mail, MapPin,
   TrendingUp, TrendingDown, IndianRupee, AlertCircle, CheckCircle2,
@@ -23,6 +23,29 @@ export default function Customers({
   sales = [],
 }) {
   const [customerToDelete, setCustomerToDelete] = useState(null);
+  const [balanceFilter, setBalanceFilter] = useState("all"); // "all", "all_udhaar", "unpaid", "partial", "paid"
+
+  const displayedCustomers = useMemo(() => {
+    return filteredCustomers.filter(c => {
+      const balance = safeNum(c.outstanding_balance);
+      const paid = safeNum(c.total_paid);
+      const totalCredit = safeNum(c.total_credit);
+      
+      if (balanceFilter === "all_udhaar") {
+        return totalCredit > 0;
+      }
+      if (balanceFilter === "unpaid") {
+        return balance > 0 && paid === 0;
+      }
+      if (balanceFilter === "partial") {
+        return balance > 0 && paid > 0;
+      }
+      if (balanceFilter === "paid") {
+        return balance === 0 && totalCredit > 0;
+      }
+      return true; // "all"
+    });
+  }, [filteredCustomers, balanceFilter]);
   return (
     <div className="fade-in">
       {selectedCustomer ? (
@@ -85,12 +108,27 @@ export default function Customers({
                 <form onSubmit={saveUdhaarEntry}>
                   <div className="form-row">
                     <div className="form-group">
-                      <label className="form-label">Amount (₹)</label>
-                      <input className="form-input" required type="number" min="1" step="0.01" name="amount" />
+                      <label className="form-label">
+                        Amount (₹)
+                        {udhaarForm === "payment" && (
+                          <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginLeft: "6px" }}>
+                            (Max: {fmt(safeNum(selectedCustomer.outstanding_balance))})
+                          </span>
+                        )}
+                      </label>
+                      <input
+                        className="form-input"
+                        required
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        max={udhaarForm === "payment" ? safeNum(selectedCustomer.outstanding_balance) : undefined}
+                        name="amount"
+                      />
                     </div>
                     <div className="form-group">
                       <label className="form-label">Note (optional)</label>
-                      <input className="form-input" name="note" placeholder="e.g., Monthly groceries" />
+                      <input className="form-input" name="note" placeholder={udhaarForm === "payment" ? "e.g., Cash repayment" : "e.g., Monthly groceries"} />
                     </div>
                   </div>
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "8px" }}>
@@ -195,6 +233,26 @@ export default function Customers({
             </button>
           </div>
 
+          {/* Balance Filters */}
+          <div className="inv-pills" style={{ marginBottom: "20px" }}>
+            {[
+              { id: "all", label: "All Customers" },
+              { id: "all_udhaar", label: "All Udhaar" },
+              { id: "unpaid", label: "Unpaid" },
+              { id: "partial", label: "Partially Paid" },
+              { id: "paid", label: "Paid" },
+            ].map(f => (
+              <button
+                key={f.id}
+                type="button"
+                className={`inv-pill ${balanceFilter === f.id ? "active" : ""}`}
+                onClick={() => setBalanceFilter(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
           {editingCustomer && !selectedCustomer && (
             <div className="card" style={{ marginBottom: "24px" }}>
               <div className="card-header">
@@ -242,7 +300,7 @@ export default function Customers({
           )}
 
           <div className="card">
-            {filteredCustomers.length > 0 ? (
+            {displayedCustomers.length > 0 ? (
               <div className="table-container">
                 <table className="table">
                   <thead>
@@ -256,7 +314,7 @@ export default function Customers({
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCustomers.map((customer) => {
+                    {displayedCustomers.map((customer) => {
                       const customerSales = sales.filter((s) => s.customer_id === customer.id);
                       const totalPurchasesSum = customerSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
                       const lastPurchaseDate = customerSales.length > 0

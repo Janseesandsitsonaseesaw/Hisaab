@@ -881,9 +881,24 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
   async function saveUdhaarEntry(e) {
     e.preventDefault();
     const raw = Object.fromEntries(new FormData(e.currentTarget));
+    const amount = Number(raw.amount);
+    
+    if (isNaN(amount) || amount <= 0) {
+      showNotice("Please enter a valid amount greater than 0", "error");
+      return;
+    }
+
+    if (udhaarForm === "payment") {
+      const outstanding = Number(selectedCustomer?.outstanding_balance || 0);
+      if (amount > outstanding) {
+        showNotice(`Repayment amount (₹${amount}) cannot exceed outstanding balance (₹${outstanding})`, "error");
+        return;
+      }
+    }
+
     const payload = {
       customer_id: selectedCustomer.id,
-      amount: Number(raw.amount),
+      amount: amount,
       type: udhaarForm,
       note: raw.note || null,
     };
