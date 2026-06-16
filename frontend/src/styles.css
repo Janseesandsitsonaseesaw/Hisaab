@@ -103,28 +103,28 @@
 }
 
 body.dark-theme, [data-theme='dark'] {
-  --bg-primary:   #1e1e1e;
-  --bg-secondary: #262626;
-  --bg-tertiary:  #333333;
+  --bg-primary:   #121214;
+  --bg-secondary: #18181b;
+  --bg-tertiary:  #202024;
 
   --text-primary:   #ffffff;
-  --text-secondary: #c7c7c7;
-  --text-tertiary:  #8c8c8c;
+  --text-secondary: #a1a1aa;
+  --text-tertiary:  #71717a;
 
   --brand-primary:       #a78bfa;
   --brand-primary-hover: #c084fc;
   --brand-primary-soft:  rgba(167, 139, 250, 0.1);
   --brand-secondary:     #f3c68f;
 
-  --sidebar-bg:           #1e1e1e;
-  --sidebar-bg-hover:     #262626;
+  --sidebar-bg:           #121214;
+  --sidebar-bg-hover:     #18181b;
   --sidebar-bg-active:    rgba(167, 139, 250, 0.15);
-  --sidebar-text:         #c7c7c7;
+  --sidebar-text:         #a1a1aa;
   --sidebar-text-active:  #a78bfa;
-  --sidebar-border:       #2e2e2e;
+  --sidebar-border:       #27272a;
 
-  --border-color:       #2e2e2e;
-  --border-color-hover: #3e3e3e;
+  --border-color:       #27272a;
+  --border-color-hover: #3f3f46;
 
   --success:      #10b981;
   --success-soft: rgba(16, 185, 129, 0.1);
@@ -142,28 +142,28 @@ body.dark-theme, [data-theme='dark'] {
 }
 
 body.light-theme, [data-theme='light'] {
-  --bg-primary:   #f5f6fa;
+  --bg-primary:   #fdfbf7;
   --bg-secondary: #ffffff;
-  --bg-tertiary:  #eef0f6;
+  --bg-tertiary:  #f7f5f0;
 
-  --text-primary:   #0f172a;
-  --text-secondary: #475569;
-  --text-tertiary:  #94a3b8;
+  --text-primary:   #18181b;
+  --text-secondary: #52525b;
+  --text-tertiary:  #a1a1aa;
 
   --brand-primary:       #8b5cf6;
   --brand-primary-hover: #7c3aed;
   --brand-primary-soft:  #f5f3ff;
-  --brand-secondary:     #f59e0b;
+  --brand-secondary:     #f3c68f;
 
   --sidebar-bg:           #ffffff;
-  --sidebar-bg-hover:     #f1f5f9;
+  --sidebar-bg-hover:     #f4f4f5;
   --sidebar-bg-active:    #f5f3ff;
-  --sidebar-text:         #64748b;
+  --sidebar-text:         #52525b;
   --sidebar-text-active:  #8b5cf6;
-  --sidebar-border:       #e2e8f0;
+  --sidebar-border:       #e4e4e7;
 
-  --border-color:       #e2e8f0;
-  --border-color-hover: #cbd5e1;
+  --border-color:       #e4e4e7;
+  --border-color-hover: #d4d4d8;
 
   --success:      #10b981;
   --success-soft: #dcfce7;
@@ -2484,8 +2484,8 @@ html {
 
 .saas-landing {
   font-family: 'Outfit', 'Inter', sans-serif;
-  background-color: #121214;
-  color: #f4f4f5;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -2522,7 +2522,7 @@ html {
 
 .saas-nav a {
   font-weight: 500;
-  color: #a1a1aa;
+  color: var(--text-secondary);
   text-decoration: none;
   transition: color 0.15s ease;
 }
@@ -2541,7 +2541,7 @@ html {
   background: none;
   border: none;
   font-weight: 600;
-  color: #a1a1aa;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: color 0.15s ease;
   font-size: 0.9375rem;
@@ -2552,8 +2552,8 @@ html {
 }
 
 .lp-btn-primary {
-  background: #f3c68f; /* Pastel yellow */
-  color: #121214;
+  background: var(--brand-secondary); /* Pastel yellow */
+  color: var(--bg-primary);
   border: none;
   font-weight: 600;
   padding: 10px 22px;
@@ -2635,13 +2635,13 @@ html {
   font-size: 3.5rem;
   line-height: 1.15;
   font-weight: 900;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .hero-subtitle {
   font-size: 1.125rem;
   line-height: 1.6;
-  color: #a1a1aa;
+  color: var(--text-secondary);
 }
 
 .hero-actions {
@@ -2671,14 +2671,14 @@ html {
 }
 
 .landing-card {
-  background: #18181b;
-  border: 1px solid #27272a;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
 .card-weekly-plan {
@@ -2688,7 +2688,7 @@ html {
 .card-label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #a1a1aa;
+  color: var(--text-secondary);
 }
 
 .donut-wrapper {
@@ -3084,17 +3084,18 @@ html {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a1538 0%, #1c0a35 100%);
+  background: var(--bg-primary);
   padding: 20px;
 }
 
 .auth-card {
   width: 100%;
   max-width: 420px;
-  background: white;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 40px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
 }
 
 .auth-logo {
@@ -3111,13 +3112,13 @@ html {
 .auth-card h2 {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .auth-subtitle {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin-bottom: 24px;
   line-height: 1.45;
 }

@@ -6,7 +6,8 @@ import {
   Download, FileText, AlertCircle, CheckCircle2,
   Users, Truck, ChevronLeft, IndianRupee, Phone, Mail, MapPin,
   MessageCircle, Lock, ArrowRight, Store, ImagePlus, Check, LogOut, Menu,
-  Barcode, Brain, TrendingUp, Wallet, Sparkles, AlertTriangle, Eye, ShieldCheck, Palette
+  Barcode, Brain, TrendingUp, Wallet, Sparkles, AlertTriangle, Eye, ShieldCheck, Palette,
+  Sun, Moon
 } from "lucide-react";
 
 import { api, fmt, safeNum, downloadInvoice, printInvoice, openWhatsAppReceipt, supabase } from "./services/api";
@@ -53,26 +54,28 @@ const themeVars = {
     primary: "#a78bfa",
     hover: "#c084fc",
     soft: "rgba(167, 139, 250, 0.1)",
-    bgPrimary: "#1e1e1e",
-    bgSecondary: "#262626",
-    bgTertiary: "#333333",
+    bgPrimary: "#121214",
+    bgSecondary: "#18181b",
+    bgTertiary: "#202024",
     textPrimary: "#ffffff",
-    textSecondary: "#c7c7c7",
-    textTertiary: "#8c8c8c",
-    sidebarBg: "#1e1e1e",
-    sidebarBgHover: "#262626",
+    textSecondary: "#a1a1aa",
+    textTertiary: "#71717a",
+    sidebarBg: "#121214",
+    sidebarBgHover: "#18181b",
     sidebarBgActive: "rgba(167, 139, 250, 0.15)",
-    sidebarText: "#c7c7c7",
+    sidebarText: "#a1a1aa",
     sidebarTextActive: "#a78bfa",
-    sidebarBorder: "#2e2e2e",
-    borderColor: "#2e2e2e",
-    borderColorHover: "#3e3e3e",
+    sidebarBorder: "#27272a",
+    borderColor: "#27272a",
+    borderColorHover: "#3f3f46",
   },
 };
 
 function applyTheme(theme = "light") {
   const selected = themeVars[theme] || themeVars.light;
   const root = document.documentElement;
+  root.setAttribute("data-theme", theme);
+  root.className = theme === "dark" ? "dark-theme" : "light-theme";
   root.style.setProperty("--brand-primary", selected.primary);
   root.style.setProperty("--brand-primary-hover", selected.hover);
   root.style.setProperty("--brand-primary-soft", selected.soft);
@@ -388,13 +391,33 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
     };
   }, []);
 
-  // Protected Route Guard
+  // Protected Route Guard & Onboarding Redirect Audit
   useEffect(() => {
-    const protectedTabs = ["dashboard", "billing", "products", "udhaar", "history", "analytics", "purchases", "settings", "onboarding"];
-    if (!appLoading && !currentUser && protectedTabs.includes(activeTab)) {
-      setActiveTab("signin");
+    if (appLoading) return;
+
+    if (currentUser) {
+      const hasStore = store && store.store_name;
+      if (storeFetchStatus === "success") {
+        if (hasStore) {
+          // Logged-in user with a store should not see signin, signup, onboarding, or landing pages
+          if (["signin", "signup", "onboarding", "landing"].includes(activeTab)) {
+            setActiveTab("dashboard");
+          }
+        } else {
+          // Logged-in user without a store must be routed to onboarding
+          if (!["onboarding", "landing", "signin", "signup", "forgot-password", "reset-password"].includes(activeTab)) {
+            setActiveTab("onboarding");
+          }
+        }
+      }
+    } else {
+      // User is not logged in: protect tabs
+      const protectedTabs = ["dashboard", "billing", "products", "udhaar", "history", "analytics", "purchases", "settings", "onboarding"];
+      if (protectedTabs.includes(activeTab)) {
+        setActiveTab("signin");
+      }
     }
-  }, [currentUser, activeTab, appLoading]);
+  }, [currentUser, store, storeFetchStatus, activeTab, appLoading]);
 
   useEffect(() => {
     if (store?.theme_color && !localStorage.getItem("hisaab_theme")) {
@@ -956,7 +979,28 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
           <nav className="saas-nav">
             <a href="#features">Features</a>
           </nav>
-          <div className="saas-header-actions">
+          <div className="saas-header-actions" style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <button 
+              className="lp-theme-toggle" 
+              onClick={toggleTheme} 
+              aria-label="Toggle theme"
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+                padding: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "50%",
+                transition: "background 0.2s, color 0.2s",
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "var(--brand-primary-soft)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "none"}
+            >
+              {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
             {currentUser ? (
               <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                 <span style={{ fontSize: "14px", color: "var(--text-muted)", display: "none" }} className="header-user-email">{currentUser.email}</span>
@@ -1156,16 +1200,16 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
           </div>
 
           <h2>
-            {isLogin && "Sign in to your account"}
-            {isRegister && "Create your free account"}
+            {isLogin && "Welcome Back"}
+            {isRegister && "Create your account"}
             {isForgotPassword && "Reset your password"}
             {isResetPassword && "Set a new password"}
           </h2>
           <p className="auth-subtitle">
-            {isLogin && "Welcome back! Enter your credentials to access the dashboard."}
-            {isRegister && "Get started with unlimited billing and inventory management."}
-            {isForgotPassword && "We'll send you a link to reset your password."}
-            {isResetPassword && "Enter your new password below."}
+            {isLogin && "Log in to access your dashboard and manage store operations."}
+            {isRegister && "Start tracking inventory, billing, and customer credit books."}
+            {isForgotPassword && "Enter your email to receive a password reset link."}
+            {isResetPassword && "Choose a secure password for your account."}
           </p>
 
           {authError && (
