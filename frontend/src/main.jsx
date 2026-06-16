@@ -1003,28 +1003,49 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
           <div className="hero-preview-container">
             <div className="landing-dashboard-grid">
               <div className="landing-card card-monthly-plan">
-                <span className="card-label">Monthly plan</span>
+                <span className="card-label">Sales Share</span>
                 <div className="donut-wrapper">
                   <svg viewBox="0 0 100 100" className="donut-svg">
-                    <circle cx="50" cy="50" r="34" fill="transparent" stroke="#2a2a2a" strokeWidth="6" />
-                    <circle cx="50" cy="50" r="34" fill="transparent" stroke="#3b82f6" strokeWidth="8" strokeDasharray="140 213" strokeDashoffset="0" strokeLinecap="round" />
-                    <circle cx="50" cy="50" r="34" fill="transparent" stroke="#ef4444" strokeWidth="8" strokeDasharray="40 213" strokeDashoffset="-140" strokeLinecap="round" />
-                    <circle cx="50" cy="50" r="34" fill="transparent" stroke="#f59e0b" strokeWidth="8" strokeDasharray="20 213" strokeDashoffset="-180" strokeLinecap="round" />
+                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="#222226" strokeWidth="8" />
+                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="var(--brand-primary)" strokeWidth="8" strokeDasharray="110 240" strokeDashoffset="-5" strokeLinecap="round" />
+                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="var(--brand-secondary)" strokeWidth="8" strokeDasharray="60 240" strokeDashoffset="-125" strokeLinecap="round" />
+                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="#60a5fa" strokeWidth="8" strokeDasharray="40 240" strokeDashoffset="-195" strokeLinecap="round" />
                   </svg>
-                  <div className="donut-labels">
-                    <span className="lbl-val val-top">200</span>
-                    <span className="lbl-val val-right">300</span>
-                    <span className="lbl-val val-bottom">300</span>
-                    <span className="lbl-val val-left">200</span>
+                  <div className="donut-center-label">
+                    <span className="donut-val">76%</span>
+                    <span className="donut-desc">Direct</span>
+                  </div>
+                </div>
+                <div className="donut-legend">
+                  <div className="legend-item">
+                    <span className="legend-dot" style={{ background: "var(--brand-primary)" }} />
+                    <span>Grocery</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-dot" style={{ background: "var(--brand-secondary)" }} />
+                    <span>Dairy</span>
+                  </div>
+                  <div className="legend-item">
+                    <span className="legend-dot" style={{ background: "#60a5fa" }} />
+                    <span>Snacks</span>
                   </div>
                 </div>
               </div>
 
               <div className="landing-card card-spending-frequency">
-                <span className="card-label">Spending frequency</span>
+                <div className="card-header-stats">
+                  <span className="card-label">Sales Activity</span>
+                  <div className="card-value-group">
+                    <span className="card-value">$1,840</span>
+                    <span className="card-trend positive">+14.2%</span>
+                  </div>
+                </div>
                 <div className="line-chart-wrapper">
                   <svg viewBox="0 0 180 80" className="line-chart-svg">
-                    <path d="M 10 55 C 30 20, 50 45, 70 25 C 90 10, 110 35, 130 15 C 150 45, 160 30, 170 35" fill="none" stroke="#f3c68f" strokeWidth="3.5" strokeLinecap="round" />
+                    <line x1="0" y1="20" x2="180" y2="20" stroke="#27272a" strokeWidth="0.75" strokeDasharray="3 3" />
+                    <line x1="0" y1="50" x2="180" y2="50" stroke="#27272a" strokeWidth="0.75" strokeDasharray="3 3" />
+                    <path d="M 10 60 C 30 30, 50 50, 70 30 C 90 10, 110 40, 130 20 C 150 50, 160 30, 170 35" fill="none" stroke="var(--brand-primary)" strokeWidth="3" strokeLinecap="round" />
+                    <circle cx="170" cy="35" r="4" fill="var(--brand-primary)" stroke="#18181b" strokeWidth="1.5" />
                   </svg>
                   <div className="chart-x-labels">
                     <span>MON</span><span>TUE</span><span>WED</span><span className="active">THU</span><span>FRI</span><span>SAT</span>
@@ -1033,16 +1054,29 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
               </div>
 
               <div className="landing-card card-weekly-plan">
-                <span className="card-label">Weekly plan</span>
+                <div className="card-header-stats">
+                  <span className="card-label">Weekly Revenue</span>
+                  <div className="card-value-group">
+                    <span className="card-value">$14,250</span>
+                    <span className="card-trend positive">+8.3%</span>
+                  </div>
+                </div>
                 <div className="area-chart-wrapper">
                   <svg viewBox="0 0 340 120" className="area-chart-svg">
-                    <line x1="10" y1="20" x2="330" y2="20" stroke="#262626" strokeWidth="1" strokeDasharray="3 3" />
-                    <line x1="10" y1="55" x2="330" y2="55" stroke="#262626" strokeWidth="1" strokeDasharray="3 3" />
-                    <line x1="10" y1="90" x2="330" y2="90" stroke="#262626" strokeWidth="1" strokeDasharray="3 3" />
+                    <defs>
+                      <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--brand-secondary)" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="var(--brand-secondary)" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    <line x1="10" y1="20" x2="330" y2="20" stroke="#27272a" strokeWidth="0.75" strokeDasharray="3 3" />
+                    <line x1="10" y1="55" x2="330" y2="55" stroke="#27272a" strokeWidth="0.75" strokeDasharray="3 3" />
+                    <line x1="10" y1="90" x2="330" y2="90" stroke="#27272a" strokeWidth="0.75" strokeDasharray="3 3" />
                     {/* Filled Area */}
-                    <path d="M 10 120 C 50 110, 80 80, 120 95 C 160 110, 200 65, 240 50 C 280 35, 310 70, 330 120 Z" fill="rgba(243, 198, 143, 0.12)" />
+                    <path d="M 10 110 C 50 90, 80 70, 120 85 C 160 100, 200 55, 240 40 C 280 25, 310 60, 330 30 L 330 120 L 10 120 Z" fill="url(#areaGrad)" />
                     {/* Top Path */}
-                    <path d="M 10 120 C 50 110, 80 80, 120 95 C 160 110, 200 65, 240 50 C 280 35, 310 70, 330 120" fill="none" stroke="#f3c68f" strokeWidth="3" strokeLinecap="round" />
+                    <path d="M 10 110 C 50 90, 80 70, 120 85 C 160 100, 200 55, 240 40 C 280 25, 310 60, 330 30" fill="none" stroke="var(--brand-secondary)" strokeWidth="3" strokeLinecap="round" />
+                    <circle cx="330" cy="30" r="4" fill="var(--brand-secondary)" stroke="#18181b" strokeWidth="1.5" />
                   </svg>
                   <div className="chart-x-labels-long">
                     <span>AUG 21</span><span>AUG 22</span><span>AUG 23</span><span className="active">AUG 24</span><span>AUG 25</span><span>AUG 26</span>
