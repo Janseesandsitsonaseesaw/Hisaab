@@ -131,11 +131,12 @@ export default function AskHisaabAI({ dashboard }) {
           width: "360px",
           maxWidth: "calc(100vw - 48px)",
           zIndex: 9999,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
           borderRadius: "16px",
-          overflow: "hidden"
+          overflow: "hidden",
+          border: "1px solid var(--brand-primary)"
         }}>
-          <div className="card ai-advisor-card" style={{ margin: 0, border: "none", height: "500px", maxHeight: "calc(100vh - 100px)" }}>
+          <div className="card ai-advisor-card" style={{ margin: 0, border: "none", height: "450px", maxHeight: "calc(100vh - 100px)" }}>
 
       <div className="card-header">
         <h3
@@ -261,8 +262,8 @@ export default function AskHisaabAI({ dashboard }) {
         </div>
       )}
 
-      <div className="card-body ai-advisor-body">
-        <div className="ai-advisor-messages" ref={scrollRef} style={{ maxHeight: "150px", minHeight: "80px" }}>
+      <div className="card-body ai-advisor-body" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div className="ai-advisor-messages" ref={scrollRef} style={{ flex: 1, overflowY: "auto", minHeight: "80px", maxHeight: "none" }}>
           {messages.length === 0 ? (
             <div className="ai-advisor-suggestions">
               <p className="ai-advisor-hint">Try asking:</p>
