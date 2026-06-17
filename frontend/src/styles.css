@@ -3917,3 +3917,183 @@ html {
   max-height: 2000px;
   opacity: 1;
 }
+
+/* ============================================================
+   MOBILE RESPONSIVENESS (max-width: 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+  /* Layout Fixes */
+  body, html {
+    overflow-x: hidden;
+    width: 100vw;
+  }
+  
+  .layout {
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .main-content {
+    padding: 12px;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+
+  /* Navigation & Sidebar Overlay */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .sidebar-backdrop.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .navbar {
+    padding: 10px 16px;
+    flex-wrap: wrap;
+    height: auto;
+  }
+
+  .navbar-search {
+    display: flex !important;
+    width: 100%;
+    margin-top: 10px;
+    order: 3;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    margin-right: 12px;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .mobile-menu-btn:active {
+    background: var(--bg-tertiary);
+  }
+
+  /* Typography & Spacing */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  /* Dashboard */
+  .stat-grid, .stats-grid, .dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  
+  .chart-card {
+    padding: 12px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  /* Forms & Touch Targets */
+  .form-group, .input-group {
+    width: 100%;
+  }
+
+  input, select, textarea, .input-field, .btn {
+    min-height: 44px; /* Larger touch targets */
+  }
+
+  .page-actions, .filter-bar {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .page-actions > *, .filter-bar > * {
+    width: 100%;
+  }
+
+  /* Billing Screen */
+  .billing-layout {
+    flex-direction: column !important;
+    height: auto;
+    overflow: visible;
+  }
+  
+  .billing-main, .billing-sidebar {
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible;
+  }
+  
+  .billing-sidebar {
+    position: relative;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    margin-top: 16px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap: 12px;
+  }
+
+  /* Touch buttons */
+  .qty-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Tables */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    box-shadow: 0 0 0 1px var(--border-color);
+  }
+  
+  table.table, .table {
+    min-width: 600px; /* Force scroll */
+  }
+
+  /* Modals */
+  .modal-content {
+    width: 95%;
+    max-width: 400px;
+    margin: 20px auto;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
