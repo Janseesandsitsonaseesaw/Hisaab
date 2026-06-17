@@ -98,12 +98,14 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
         </button>
       </div>
 
-      {/* KPI Grid - Top 4 Metrics */}
+      {/* KPI Grid - Top 6 Metrics */}
       <div className="kpi-grid" style={{ marginBottom: "24px" }}>
         <StatCard title="Today's Sales" icon={Receipt} value={fmt(dashboard.today_sales)} trend={safeNum(dashboard.today_sales) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.today_sales) > 0 ? "Sales today" : "No sales yet"} colorClass="kpi-icon-primary" sub={`${ordersToday} orders placed`} loading={dashboardLoading} />
         <StatCard title="Today's Profit" icon={TrendingUp} value={fmt(dashboard.today_profit)} trend={safeNum(dashboard.today_profit) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.today_profit) > 0 ? "Earning today" : "No profit yet"} colorClass="kpi-icon-success" sub={`${dashboard.today_sales > 0 ? Math.round((dashboard.today_profit / dashboard.today_sales) * 100) : 0}% margin`} loading={dashboardLoading} />
         <StatCard title="Total Products" icon={Package} value={safeNum(dashboard.total_products)} trend="neutral" trendValue="Active catalog" colorClass="kpi-icon-primary" sub={`${healthyCnt} healthy`} loading={dashboardLoading} />
         <StatCard title="Low Stock Items" icon={AlertCircle} value={lowStockList.length} trend={lowStockList.length > 5 ? "down" : "neutral"} trendValue="Needs attention" colorClass={lowStockList.length > 0 ? "kpi-icon-danger" : "kpi-icon-warning"} sub={`${outOfStockCnt} out of stock`} loading={dashboardLoading} />
+        <StatCard title="Monthly Revenue" icon={CalendarDays} value={fmt(safeNum(dashboard.monthly_sales))} trend={safeNum(dashboard.monthly_sales) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.monthly_sales) > 0 ? "This month" : "No revenue yet"} colorClass="kpi-icon-primary" sub="Current month" loading={dashboardLoading} />
+        <StatCard title="Orders Today" icon={ShoppingCart} value={ordersToday} trend={ordersToday > 0 ? "up" : "neutral"} trendValue={ordersToday > 0 ? "Active today" : "No orders yet"} colorClass="kpi-icon-primary" sub="Bills generated" loading={dashboardLoading} />
       </div>
 
       <div className="dashboard-grid-12">
