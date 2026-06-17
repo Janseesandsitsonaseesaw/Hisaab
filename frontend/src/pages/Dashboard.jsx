@@ -206,99 +206,6 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
           </div>
         </div>
 
-        {/* Ask Hisaab AI */}
-        <div className="col-span-12">
-          <AskHisaabAI />
-        </div>
-
-        {/* Recent Activity */}
-        <div className="col-span-6">
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Recent Activity</h3>
-              <Clock size={16} color="var(--text-tertiary)" />
-            </div>
-            <div className="card-body">
-              {dashboardLoading ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {[1, 2, 3].map((n) => (
-                    <div key={n} style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                      <div className="shimmer" style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
-                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
-                        <div className="shimmer" style={{ height: "14px", width: "70%", borderRadius: "4px" }} />
-                        <div className="shimmer" style={{ height: "10px", width: "40%", borderRadius: "4px" }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="activity-feed">
-                  {recentActivity.length > 0 ? recentActivity.map((act) => {
-                    const cfg = activityConfig[act.type] || activityConfig.bill;
-                    return (
-                      <div className="activity-item" key={act.id}>
-                        <div className="activity-icon" style={{ background: cfg.bg, color: cfg.color }}><cfg.icon size={15} /></div>
-                        <div className="activity-content">
-                          <div className="activity-title">{act.title}</div>
-                          <div className="activity-time">{act.time}</div>
-                        </div>
-                      </div>
-                    );
-                  }) : (
-                    <div style={{ textAlign: "center", padding: "16px 0" }}>
-                      <Clock size={28} color="var(--text-tertiary)" style={{ marginBottom: "8px" }} />
-                      <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)" }}>No recent activity yet</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Purchases */}
-        <div className="col-span-6">
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Recent Purchases</h3>
-              <Truck size={16} color="var(--text-tertiary)" />
-            </div>
-            <div className="card-body">
-              {dashboardLoading ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {[1, 2, 3].map((n) => (
-                    <div key={n} style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                      <div className="shimmer" style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
-                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
-                        <div className="shimmer" style={{ height: "14px", width: "60%", borderRadius: "4px" }} />
-                        <div className="shimmer" style={{ height: "10px", width: "40%", borderRadius: "4px" }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (dashboard.recent_purchases || []).length > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  {(dashboard.recent_purchases || []).slice(0, 4).map((p) => (
-                    <div className="purchase-item" key={p.id}>
-                      <div className="purchase-icon"><Truck size={15} /></div>
-                      <div className="purchase-info">
-                        <strong>{p.product_name}</strong>
-                        <small>{p.supplier_name} · {p.quantity} units</small>
-                      </div>
-                      <div className="purchase-cost">{fmt(p.total_cost)}</div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state" style={{ padding: "24px 0" }}>
-                  <Truck size={28} style={{ color: "var(--text-tertiary)", marginBottom: "8px" }} />
-                  <span className="empty-text" style={{ fontSize: "0.8125rem" }}>No purchases yet</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
         {/* Top Selling Products */}
         <div className="col-span-4">
           <div className="card">
@@ -456,6 +363,95 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
             </div>
           </div>
         </div>
+
+        {/* Recent Activity */}
+        <div className="col-span-6">
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Recent Activity</h3>
+              <Clock size={16} color="var(--text-tertiary)" />
+            </div>
+            <div className="card-body">
+              {dashboardLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                      <div className="shimmer" style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div className="shimmer" style={{ height: "14px", width: "70%", borderRadius: "4px" }} />
+                        <div className="shimmer" style={{ height: "10px", width: "40%", borderRadius: "4px" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="activity-feed">
+                  {recentActivity.length > 0 ? recentActivity.map((act) => {
+                    const cfg = activityConfig[act.type] || activityConfig.bill;
+                    return (
+                      <div className="activity-item" key={act.id}>
+                        <div className="activity-icon" style={{ background: cfg.bg, color: cfg.color }}><cfg.icon size={15} /></div>
+                        <div className="activity-content">
+                          <div className="activity-title">{act.title}</div>
+                          <div className="activity-time">{act.time}</div>
+                        </div>
+                      </div>
+                    );
+                  }) : (
+                    <div style={{ textAlign: "center", padding: "16px 0" }}>
+                      <Clock size={28} color="var(--text-tertiary)" style={{ marginBottom: "8px" }} />
+                      <p style={{ margin: 0, fontSize: "13px", color: "var(--text-secondary)" }}>No recent activity yet</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Purchases */}
+        <div className="col-span-6">
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Recent Purchases</h3>
+              <Truck size={16} color="var(--text-tertiary)" />
+            </div>
+            <div className="card-body">
+              {dashboardLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                      <div className="shimmer" style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div className="shimmer" style={{ height: "14px", width: "60%", borderRadius: "4px" }} />
+                        <div className="shimmer" style={{ height: "10px", width: "40%", borderRadius: "4px" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (dashboard.recent_purchases || []).length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {(dashboard.recent_purchases || []).slice(0, 4).map((p) => (
+                    <div className="purchase-item" key={p.id}>
+                      <div className="purchase-icon"><Truck size={15} /></div>
+                      <div className="purchase-info">
+                        <strong>{p.product_name}</strong>
+                        <small>{p.supplier_name} · {p.quantity} units</small>
+                      </div>
+                      <div className="purchase-cost">{fmt(p.total_cost)}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state" style={{ padding: "24px 0" }}>
+                  <Truck size={28} style={{ color: "var(--text-tertiary)", marginBottom: "8px" }} />
+                  <span className="empty-text" style={{ fontSize: "0.8125rem" }}>No purchases yet</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      <AskHisaabAI />
 
       </div>
     </div>

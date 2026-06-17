@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Sparkles, Send, Loader2, Bot, RotateCcw, BellRing } from "lucide-react";
+import { Sparkles, Send, Loader2, Bot, RotateCcw, BellRing, X } from "lucide-react";
 import { api } from "../services/api";
 
 const SUGGESTED_PROMPTS = [
@@ -17,6 +17,7 @@ export default function AskHisaabAI({ dashboard }) {
   const [stockNotifs, setStockNotifs] = useState([]);
   const [notifsLoading, setNotifsLoading] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -83,8 +84,59 @@ export default function AskHisaabAI({ dashboard }) {
     setError("");
   }
 
+
   return (
-    <div className="card ai-advisor-card">
+    <>
+      {/* Floating Action Button */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          style={{
+            position: "fixed",
+            bottom: "24px",
+            right: "24px",
+            width: "56px",
+            height: "56px",
+            borderRadius: "28px",
+            background: "var(--brand-primary)",
+            color: "white",
+            border: "none",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            zIndex: 9999,
+            transition: "transform 0.2s"
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+          onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+        >
+          <Sparkles size={24} />
+          {stockNotifs.length > 0 && (
+            <span style={{
+              position: "absolute", top: "0px", right: "0px", width: "14px", height: "14px",
+              borderRadius: "50%", background: "var(--danger)", border: "2px solid white"
+            }} />
+          )}
+        </button>
+      )}
+
+      {/* Floating Chat Widget */}
+      {isOpen && (
+        <div style={{
+          position: "fixed",
+          bottom: "24px",
+          right: "24px",
+          width: "360px",
+          maxWidth: "calc(100vw - 48px)",
+          zIndex: 9999,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+          borderRadius: "16px",
+          overflow: "hidden"
+        }}>
+          <div className="card ai-advisor-card" style={{ margin: 0, border: "none", height: "500px", maxHeight: "calc(100vh - 100px)" }}>
+
       <div className="card-header">
         <h3
           className="card-title"
@@ -129,6 +181,15 @@ export default function AskHisaabAI({ dashboard }) {
             style={{ opacity: messages.length === 0 ? 0.35 : 1, transition: "opacity 0.2s" }}
           >
             <RotateCcw size={15} />
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            title="Close"
+            onClick={() => setIsOpen(false)}
+          >
+            <X size={16} />
           </button>
         </div>
       </div>
@@ -265,5 +326,8 @@ export default function AskHisaabAI({ dashboard }) {
         </form>
       </div>
     </div>
+        </div>
+      )}
+    </>
   );
 }
