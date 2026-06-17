@@ -398,24 +398,26 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
   useEffect(() => {
     if (appLoading) return;
 
+    const publicTabs = ["landing", "signin", "signup", "forgot-password", "reset-password"];
+    const protectedTabs = ["dashboard", "billing", "products", "udhaar", "history", "analytics", "purchases", "settings", "customers", "inventory", "sales"];
+
     if (currentUser) {
-      const hasStore = store && store.store_name;
       if (storeFetchStatus === "success") {
+        const hasStore = store && store.store_name;
         if (hasStore) {
-          // Logged-in user with a store should not see signin, signup, onboarding, or landing pages
-          if (["signin", "signup", "onboarding", "landing"].includes(activeTab)) {
+          // Logged-in user with a store should not see public or onboarding pages
+          if (publicTabs.includes(activeTab) || activeTab === "onboarding") {
             setActiveTab("dashboard");
           }
         } else {
           // Logged-in user without a store must be routed to onboarding
-          if (!["onboarding", "landing", "signin", "signup", "forgot-password", "reset-password"].includes(activeTab)) {
+          if (activeTab !== "onboarding" && !publicTabs.includes(activeTab)) {
             setActiveTab("onboarding");
           }
         }
       }
     } else {
       // User is not logged in: protect tabs
-      const protectedTabs = ["dashboard", "billing", "products", "udhaar", "history", "analytics", "purchases", "settings", "onboarding"];
       if (protectedTabs.includes(activeTab)) {
         setActiveTab("signin");
       }

@@ -98,23 +98,17 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
         </button>
       </div>
 
-      {/* KPI Grid */}
+      {/* KPI Grid - Top 4 Metrics */}
       <div className="kpi-grid" style={{ marginBottom: "24px" }}>
         <StatCard title="Today's Sales" icon={Receipt} value={fmt(dashboard.today_sales)} trend={safeNum(dashboard.today_sales) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.today_sales) > 0 ? "Sales today" : "No sales yet"} colorClass="kpi-icon-primary" sub={`${ordersToday} orders placed`} loading={dashboardLoading} />
         <StatCard title="Today's Profit" icon={TrendingUp} value={fmt(dashboard.today_profit)} trend={safeNum(dashboard.today_profit) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.today_profit) > 0 ? "Earning today" : "No profit yet"} colorClass="kpi-icon-success" sub={`${dashboard.today_sales > 0 ? Math.round((dashboard.today_profit / dashboard.today_sales) * 100) : 0}% margin`} loading={dashboardLoading} />
-        <StatCard title="Monthly Revenue" icon={CalendarDays} value={fmt(safeNum(dashboard.monthly_sales))} trend={safeNum(dashboard.monthly_sales) > 0 ? "up" : "neutral"} trendValue={safeNum(dashboard.monthly_sales) > 0 ? "This month" : "No revenue yet"} colorClass="kpi-icon-primary" sub="Current month" loading={dashboardLoading} />
-        <StatCard title="Orders Today" icon={ShoppingCart} value={ordersToday} trend={ordersToday > 0 ? "up" : "neutral"} trendValue={ordersToday > 0 ? "Active today" : "No orders yet"} colorClass="kpi-icon-primary" sub="Bills generated" loading={dashboardLoading} />
-        <StatCard title="Avg Bill Value" icon={BarChart2} value={fmt(avgBillValue)} trend="neutral" trendValue="Per transaction" colorClass="kpi-icon-success" sub={`Based on ${ordersToday} order${ordersToday !== 1 ? "s" : ""}`} loading={dashboardLoading} />
-        <StatCard title="Best Seller" icon={Star} value={dashboard.top_selling_products[0]?.name || "—"} trend="up" trendValue="Top product today" colorClass="kpi-icon-warning" sub={dashboard.top_selling_products[0] ? `${safeNum(dashboard.top_selling_products[0].quantity)} units sold` : "No sales yet"} isText loading={dashboardLoading} />
         <StatCard title="Total Products" icon={Package} value={safeNum(dashboard.total_products)} trend="neutral" trendValue="Active catalog" colorClass="kpi-icon-primary" sub={`${healthyCnt} healthy`} loading={dashboardLoading} />
         <StatCard title="Low Stock Items" icon={AlertCircle} value={lowStockList.length} trend={lowStockList.length > 5 ? "down" : "neutral"} trendValue="Needs attention" colorClass={lowStockList.length > 0 ? "kpi-icon-danger" : "kpi-icon-warning"} sub={`${outOfStockCnt} out of stock`} loading={dashboardLoading} />
-        <StatCard title="Outstanding Udhaar" icon={Wallet} value={fmt(safeNum(dashboard.total_udhaar_outstanding))} trend={safeNum(dashboard.total_udhaar_outstanding) > 0 ? "down" : "neutral"} trendValue={`${safeNum(dashboard.total_customers)} customers`} colorClass="kpi-icon-warning" sub="Collection pending" loading={dashboardLoading} />
       </div>
 
-      <div className="dashboard-v2-grid">
-        {/* Main column */}
-        <div className="dashboard-main-col">
-          {/* Analytics Bar Chart */}
+      <div className="dashboard-grid-12">
+        {/* Analytics Bar Chart */}
+        <div className="col-span-8">
           <div className="card">
             <div className="card-header" style={{ borderBottom: "none", paddingBottom: "0" }}>
               <h3 className="card-title">Analytics</h3>
@@ -156,110 +150,10 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
               </div>
             </div>
           </div>
-
-          {/* Top Selling Products */}
-          <div className="card">
-            <div className="card-header">
-              <h3 className="card-title">Top Selling Products</h3>
-              <span className="badge badge-neutral">This week</span>
-            </div>
-            <div className="card-body">
-              {dashboardLoading ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {[1, 2, 3].map((n) => (
-                    <div key={n} className="shimmer" style={{ height: "48px", width: "100%", borderRadius: "8px" }} />
-                  ))}
-                </div>
-              ) : dashboard.top_selling_products.length > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  {dashboard.top_selling_products.slice(0, 5).map((item, idx) => {
-                    const maxQty   = dashboard.top_selling_products[0].quantity;
-                    const pct      = (item.quantity / maxQty) * 100;
-                    const rankClrs = ["#f59e0b", "#94a3b8", "#cd7f32", "#64748b", "#64748b"];
-                    return (
-                      <div className="top-product-item" key={item.name}>
-                        <div className="top-product-rank" style={{ color: rankClrs[idx] }}>#{idx + 1}</div>
-                        <div className="top-product-info">
-                          <div className="top-product-name">{item.name}</div>
-                          <div className="top-product-bar-bg" style={{ margin: "6px 0" }}>
-                            <div className="top-product-bar-fill" style={{ width: `${pct}%` }} />
-                          </div>
-                          <div className="top-product-stats">{safeNum(item.quantity)} units sold · {fmt(item.total_amount)}</div>
-                        </div>
-                        <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <div style={{ fontWeight: 700, fontSize: "0.9375rem", color: "var(--brand-primary)" }}>{fmt(item.total_amount)}</div>
-                          <div style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>{safeNum(item.quantity)} units</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="empty-state-v2">
-                  <div className="empty-state-v2-icon"><BarChart2 size={40} /></div>
-                  <h3 className="empty-state-v2-title">No sales data yet</h3>
-                  <p className="empty-state-v2-desc">Start billing to see your top products here.</p>
-                  <button className="btn btn-primary btn-sm" onClick={() => setActiveTab("billing")}>Start Billing</button>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
-        {/* Side column */}
-        <div className="dashboard-side-col">
-          {/* Ask Hisaab AI */}
-          <AskHisaabAI />
-
-          {/* Quick Actions */}
-          <div className="card">
-            <div className="card-header"><h3 className="card-title">Quick Actions</h3></div>
-            <div className="card-body">
-              <div className="quick-actions-grid">
-                <button className="action-btn action-btn-primary" onClick={() => setActiveTab("billing")}>
-                  <Receipt size={22} /> New Bill
-                </button>
-                <button className="action-btn" onClick={() => { setEditingProduct({}); setActiveTab("products"); }}>
-                  <Plus size={22} color="var(--brand-primary)" /> Add Product
-                </button>
-                <button className="action-btn" onClick={() => { setEditingPurchase({}); setActiveTab("purchases"); }}>
-                  <Truck size={22} color="var(--brand-primary)" /> Record Purchase
-                </button>
-                <button className="action-btn" onClick={() => { setEditingCustomer({}); setActiveTab("customers"); }}>
-                  <Plus size={22} color="var(--brand-primary)" /> Add Customer
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Today's Summary */}
-          <div className="card">
-            <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <h3 className="card-title" style={{ color: "var(--brand-primary)" }}>Today's Summary</h3>
-              {dashboardLoading ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {[1, 2, 3, 4].map((n) => (
-                    <div key={n} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div className="shimmer" style={{ height: "16px", width: "40%", borderRadius: "4px" }} />
-                      <div className="shimmer" style={{ height: "16px", width: "25%", borderRadius: "4px" }} />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <>
-                  <div className="summary-stat-row"><span>Gross Revenue</span><strong>{fmt(dashboard.today_sales)}</strong></div>
-                  <div className="summary-stat-row"><span>Net Profit</span><strong>{fmt(dashboard.today_profit)}</strong></div>
-                  <div className="summary-stat-row"><span>Orders</span><strong>{ordersToday}</strong></div>
-                  <div className="summary-stat-row">
-                    <span>Best Seller</span>
-                    <strong style={{ fontSize: "0.8125rem" }}>{dashboard.top_selling_products[0]?.name || "—"}</strong>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Inventory Health */}
+        {/* Inventory Health */}
+        <div className="col-span-4">
           <div className="card">
             <div className="card-header">
               <h3 className="card-title">Inventory Health</h3>
@@ -308,8 +202,15 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
               )}
             </div>
           </div>
+        </div>
 
-          {/* Recent Activity */}
+        {/* Ask Hisaab AI */}
+        <div className="col-span-12">
+          <AskHisaabAI />
+        </div>
+
+        {/* Recent Activity */}
+        <div className="col-span-6">
           <div className="card">
             <div className="card-header">
               <h3 className="card-title">Recent Activity</h3>
@@ -351,8 +252,10 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
               )}
             </div>
           </div>
+        </div>
 
-          {/* Recent Purchases */}
+        {/* Recent Purchases */}
+        <div className="col-span-6">
           <div className="card">
             <div className="card-header">
               <h3 className="card-title">Recent Purchases</h3>
@@ -392,53 +295,110 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
               )}
             </div>
           </div>
+        </div>
 
-          {/* Recent Udhaar */}
+        {/* Top Selling Products */}
+        <div className="col-span-4">
           <div className="card">
             <div className="card-header">
-              <h3 className="card-title">Recent Udhaar</h3>
-              <IndianRupee size={16} color="var(--text-tertiary)" />
+              <h3 className="card-title">Top Selling Products</h3>
+              <span className="badge badge-neutral">This week</span>
             </div>
             <div className="card-body">
               {dashboardLoading ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   {[1, 2, 3].map((n) => (
-                    <div key={n} style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                      <div className="shimmer" style={{ width: "28px", height: "28px", borderRadius: "50%", flexShrink: 0 }} />
-                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
-                        <div className="shimmer" style={{ height: "14px", width: "65%", borderRadius: "4px" }} />
-                        <div className="shimmer" style={{ height: "10px", width: "35%", borderRadius: "4px" }} />
-                      </div>
-                    </div>
+                    <div key={n} className="shimmer" style={{ height: "48px", width: "100%", borderRadius: "8px" }} />
                   ))}
                 </div>
-              ) : (dashboard.recent_udhaar || []).length > 0 ? (
-                <div className="activity-feed">
-                  {(dashboard.recent_udhaar || []).slice(0, 4).map((u) => {
-                    const isCredit = u.type === "credit";
+              ) : dashboard.top_selling_products.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {dashboard.top_selling_products.slice(0, 5).map((item, idx) => {
+                    const maxQty   = dashboard.top_selling_products[0].quantity;
+                    const pct      = (item.quantity / maxQty) * 100;
+                    const rankClrs = ["#f59e0b", "#94a3b8", "#cd7f32", "#64748b", "#64748b"];
                     return (
-                      <div className="activity-item" key={u.id}>
-                        <div className="activity-icon" style={{ background: isCredit ? "var(--warning-soft)" : "var(--success-soft)", color: isCredit ? "#d97706" : "#059669" }}>
-                          {isCredit ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
+                      <div className="top-product-item" key={item.name}>
+                        <div className="top-product-rank" style={{ color: rankClrs[idx] }}>#{idx + 1}</div>
+                        <div className="top-product-info">
+                          <div className="top-product-name">{item.name}</div>
+                          <div className="top-product-bar-bg" style={{ margin: "6px 0" }}>
+                            <div className="top-product-bar-fill" style={{ width: `${pct}%` }} />
+                          </div>
+                          <div className="top-product-stats">{safeNum(item.quantity)} units sold · {fmt(item.total_amount)}</div>
                         </div>
-                        <div className="activity-content">
-                          <div className="activity-title">{u.customer_name}: {isCredit ? "Credit" : "Payment"} {fmt(u.amount)}</div>
-                          <div className="activity-time">{new Date(u.created_at).toLocaleDateString("en-IN")}</div>
+                        <div style={{ textAlign: "right", flexShrink: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: "0.9375rem", color: "var(--brand-primary)" }}>{fmt(item.total_amount)}</div>
+                          <div style={{ fontSize: "0.75rem", color: "var(--text-tertiary)" }}>{safeNum(item.quantity)} units</div>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <div className="empty-state" style={{ padding: "24px 0" }}>
-                  <IndianRupee size={28} style={{ color: "var(--text-tertiary)", marginBottom: "8px" }} />
-                  <span className="empty-text" style={{ fontSize: "0.8125rem" }}>No udhaar activity</span>
+                <div className="empty-state-v2">
+                  <div className="empty-state-v2-icon"><BarChart2 size={40} /></div>
+                  <h3 className="empty-state-v2-title">No sales data yet</h3>
+                  <p className="empty-state-v2-desc">Start billing to see your top products here.</p>
+                  <button className="btn btn-primary btn-sm" onClick={() => setActiveTab("billing")}>Start Billing</button>
                 </div>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Action Required */}
+        {/* Quick Actions & Overview */}
+        <div className="col-span-4" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="card" style={{ height: 'auto' }}>
+            <div className="card-header"><h3 className="card-title">Quick Actions</h3></div>
+            <div className="card-body">
+              <div className="quick-actions-grid">
+                <button className="action-btn action-btn-primary" onClick={() => setActiveTab("billing")}>
+                  <Receipt size={22} /> New Bill
+                </button>
+                <button className="action-btn" onClick={() => { setEditingProduct({}); setActiveTab("products"); }}>
+                  <Plus size={22} color="var(--brand-primary)" /> Add Product
+                </button>
+                <button className="action-btn" onClick={() => { setEditingPurchase({}); setActiveTab("purchases"); }}>
+                  <Truck size={22} color="var(--brand-primary)" /> Record Purchase
+                </button>
+                <button className="action-btn" onClick={() => { setEditingCustomer({}); setActiveTab("customers"); }}>
+                  <Plus size={22} color="var(--brand-primary)" /> Add Customer
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ height: 'auto', flex: 1 }}>
+            <div className="card-body" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <h3 className="card-title" style={{ color: "var(--brand-primary)" }}>Performance Overview</h3>
+              {dashboardLoading ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <div key={n} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div className="shimmer" style={{ height: "16px", width: "40%", borderRadius: "4px" }} />
+                      <div className="shimmer" style={{ height: "16px", width: "25%", borderRadius: "4px" }} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <div className="summary-stat-row"><span>Monthly Revenue</span><strong>{fmt(dashboard.monthly_sales)}</strong></div>
+                  <div className="summary-stat-row"><span>Avg Bill Value</span><strong>{fmt(avgBillValue)}</strong></div>
+                  <div className="summary-stat-row"><span>Outstanding Udhaar</span><strong style={{ color: 'var(--warning)' }}>{fmt(dashboard.total_udhaar_outstanding)}</strong></div>
+                  <div className="summary-stat-row"><span>Customers</span><strong>{safeNum(dashboard.total_customers)}</strong></div>
+                  <div className="summary-stat-row">
+                    <span>Best Seller</span>
+                    <strong style={{ fontSize: "0.8125rem", color: 'var(--brand-primary)' }}>{dashboard.top_selling_products[0]?.name || "—"}</strong>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Low Stock Alerts */}
+        <div className="col-span-4">
           <div className="card border-warning">
             <div className="card-header">
               <h3 className="card-title text-warning" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -460,7 +420,7 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
                 </div>
               ) : lowStockList.length > 0 ? (
                 <div className="item-list">
-                  {lowStockList.slice(0, 4).map((item) => {
+                  {lowStockList.slice(0, 6).map((item) => {
                     const sev = getStockSeverity(item.stock);
                     return (
                       <div className="action-required-item" key={item.id}>
@@ -477,7 +437,7 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
                       </div>
                     );
                   })}
-                  {lowStockList.length > 4 && (
+                  {lowStockList.length > 6 && (
                     <div style={{ padding: "12px 20px" }}>
                       <button className="btn btn-ghost btn-sm" style={{ width: "100%" }} onClick={() => setActiveTab("products")}>
                         View all {lowStockList.length} items <ArrowRight size={14} />
@@ -494,6 +454,7 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );

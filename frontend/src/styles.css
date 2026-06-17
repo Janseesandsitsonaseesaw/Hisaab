@@ -812,14 +812,52 @@ a { text-decoration: none; color: inherit; }
 .trend-neutral { color: var(--text-tertiary); }
 
 /* ============================================================
-   DASHBOARD LAYOUT
+   DASHBOARD LAYOUT (12-Column Grid)
    ============================================================ */
-.dashboard-v2-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+.dashboard-grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
+}
 
-@media (min-width: 1080px) {
-  .dashboard-v2-grid        { grid-template-columns: repeat(3, 1fr); }
-  .dashboard-main-col       { grid-column: span 2; display: flex; flex-direction: column; gap: 20px; }
-  .dashboard-side-col       { grid-column: span 1; display: flex; flex-direction: column; gap: 20px; }
+.col-span-12 { grid-column: span 12; }
+.col-span-8  { grid-column: span 8; }
+.col-span-6  { grid-column: span 6; }
+.col-span-4  { grid-column: span 4; }
+.col-span-3  { grid-column: span 3; }
+
+/* Ensure cards in grid take full height */
+.dashboard-grid-12 > .card,
+.dashboard-grid-12 > div > .card,
+.dashboard-grid-12 > .col-span-12,
+.dashboard-grid-12 > .col-span-8,
+.dashboard-grid-12 > .col-span-6,
+.dashboard-grid-12 > .col-span-4,
+.dashboard-grid-12 > .col-span-3 {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-grid-12 .card {
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.dashboard-grid-12 .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 1080px) {
+  .col-span-8 { grid-column: span 12; }
+  .col-span-4 { grid-column: span 6; }
+  .col-span-3 { grid-column: span 6; }
+}
+
+@media (max-width: 768px) {
+  .col-span-12, .col-span-8, .col-span-6, .col-span-4, .col-span-3 { grid-column: span 12; }
 }
 
 /* ── Today's Summary stat rows ─────────────────────────────── */
@@ -2445,7 +2483,7 @@ a { text-decoration: none; color: inherit; }
 @media (max-width: 1080px) {
   .billing-layout { grid-template-columns: 1fr; height: auto; }
   .cart-sidebar   { height: 520px; }
-  .dashboard-v2-grid { grid-template-columns: 1fr; }
+  .dashboard-grid-12 { grid-template-columns: 1fr; }
   .kpi-grid { grid-template-columns: repeat(3, 1fr); }
   .settings-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .settings-grid { grid-template-columns: 1fr; }
