@@ -1321,7 +1321,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
                   <button 
                     type="button" 
                     className="btn btn-secondary btn-block google-login-btn"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                     onClick={handleGoogleLogin}
                     disabled={authLoading}
                   >
