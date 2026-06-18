@@ -67,14 +67,9 @@ export default function Navbar({
         <button className="icon-btn hamburger-btn" onClick={() => setIsSidebarOpen(true)}>
           <Menu size={20} />
         </button>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", paddingLeft: "12px" }}>
-          <div style={{ fontSize: "1.5rem", display: "flex", alignItems: "center", justifyContent: "center", width: "40px", height: "40px", borderRadius: "50%", background: "var(--bg-tertiary)" }}>
-            👋
-          </div>
-          <div>
-            <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)" }}>Greetings!</h2>
-            <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--text-tertiary)" }}>Start your day with {(store.owner_name || "").split(" ")[0].toUpperCase()}</p>
-          </div>
+        <div className="store-info">
+          <span className="store-name">{store.store_name}</span>
+          <span className="store-meta">{store.store_category}</span>
         </div>
       </div>
 
@@ -255,15 +250,8 @@ export default function Navbar({
 
         {/* Profile dropdown */}
         <div className="profile-dropdown-wrapper" ref={profileRef}>
-          <button 
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
-            style={{ border: "none", cursor: "pointer", width: "auto", padding: "6px 14px 6px 6px", borderRadius: "30px", background: "#222", color: "white", display: "flex", alignItems: "center", gap: "10px", transition: "all 0.2s" }}
-          >
-            <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "white", color: "#222", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 700 }}>
-              {getInitials(store.owner_name)}
-            </div>
-            <span style={{ fontSize: "0.85rem", fontWeight: 500 }}>My account</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <button className="avatar-btn" onClick={() => setIsProfileOpen(!isProfileOpen)}>
+            {getInitials(store.owner_name)}
           </button>
 
           {isProfileOpen && (
