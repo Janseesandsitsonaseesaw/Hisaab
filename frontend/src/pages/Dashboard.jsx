@@ -12,7 +12,7 @@ import StatCard from "../components/StatCard";
 import AskHisaabAI from "../components/AskHisaabAI";
 import { fmt, safeNum } from "../services/api";
 
-const DONUT_COLORS = ["var(--success)", "var(--warning)", "var(--danger)"];
+const DONUT_COLORS = ["#a7f3d0", "#fde68a", "#fecaca"];
 
 const activityConfig = {
   bill:    { bg: "#dbeafe", color: "#2563eb", icon: Receipt },
@@ -40,7 +40,7 @@ export default function Dashboard({ store, dashboard, sales, dashboardLoading, s
   const healthyCnt     = Math.max(0, totalProducts - lowStockList.length);
   const healthPct      = totalProducts > 0 ? Math.round((healthyCnt / totalProducts) * 100) : 100;
 
-  const barColor = chartTab === "profit" ? "var(--success)" : chartTab === "orders" ? "var(--brand-primary-hover)" : "var(--brand-primary)";
+  const barColor = chartTab === "profit" ? "var(--success)" : chartTab === "orders" ? "#8b5cf6" : "var(--brand-primary)";
 
   // Build real weekly chart data from sales
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
