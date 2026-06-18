@@ -4,6 +4,7 @@
 
 /* Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('./dashboard.css');
 
 /* ── CSS Variables ─────────────────────────────────────────── */
 :root {
@@ -212,7 +213,7 @@ body.light-theme, [data-theme='light'] {
 body {
   margin: 0; padding: 0;
   font-family: var(--font-family);
-  background-color: var(--bg-primary);
+  background-color: #dceaf7;
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
@@ -223,24 +224,30 @@ h1, h2, h3, h4, p, small { margin: 0; }
 a { text-decoration: none; color: inherit; }
 
 /* ── App layout ─────────────────────────────────────────────── */
-.app-container { display: flex; height: 100vh; overflow: hidden; }
+.app-container {
+  display: flex;
+  height: calc(100vh - 48px);
+  margin: 24px;
+  border-radius: 36px;
+  background-color: #2b2d31;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+}
 
 /* ============================================================
    SIDEBAR
    ============================================================ */
 .sidebar {
   width: var(--sidebar-width);
-  background-color: var(--sidebar-bg);
+  background-color: transparent;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   z-index: 30;
   transition: transform 0.3s ease;
-  margin: 16px 0 16px 16px;
-  border-radius: var(--radius-xl);
-  height: calc(100vh - 32px);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
+  height: 100%;
+  box-shadow: none;
+  margin: 0;
 }
 
 .sidebar-header {
@@ -404,7 +411,16 @@ a { text-decoration: none; color: inherit; }
 /* ============================================================
    NAVBAR
    ============================================================ */
-.main-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: #FFFFFF;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+}
 
 .navbar {
   height: var(--navbar-height);
@@ -431,21 +447,20 @@ a { text-decoration: none; color: inherit; }
 .navbar-search {
   display: flex;
   align-items: center;
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+  border: none;
   border-radius: 50px;
-  padding: 0 14px;
-  width: 300px;
-  height: 38px;
+  padding: 0 16px;
+  width: 360px;
+  height: 42px;
   flex-shrink: 0;
   transition: var(--transition-normal);
 }
 
 .navbar-search:focus-within {
-  border-color: var(--brand-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 0 0 4px var(--brand-primary-soft);
   background-color: var(--bg-secondary);
-  width: 340px;
+  width: 400px;
 }
 
 .navbar-search input {
