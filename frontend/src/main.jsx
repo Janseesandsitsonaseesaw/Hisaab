@@ -614,7 +614,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
     setAuthError("");
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: authEmail.toLowerCase(),
+        email: authEmail.trim().toLowerCase(),
         password: authPassword,
       });
       if (error) throw error;
@@ -656,7 +656,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
     setAuthError("");
     try {
       const { data, error } = await supabase.auth.signUp({
-        email: authEmail.toLowerCase(),
+        email: authEmail.trim().toLowerCase(),
         password: authPassword,
         options: {
           data: {
