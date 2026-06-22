@@ -343,44 +343,45 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
   useEffect(() => {
     // 1. Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setCurrentUser(session.user);
-        refresh()
-          .then((storeData) => {
-            if ((!storeData || !storeData.store_name) && !["landing", "signin", "signup", "forgot-password", "reset-password"].includes(activeTab)) {
-              setActiveTab("onboarding");
-            }
-          })
-          .catch((err) => {
-            console.error("Failed to load store data:", err);
-            showNotice("Store data load failed. Please check connection.", "error");
-          })
-          .finally(() => setAppLoading(false));
-      } else {
-        setCurrentUser(null);
-        setAppLoading(false);
-        setStoreFetchStatus("idle");
-      }
-    });
+  if (session) {
+    setCurrentUser(session.user);
+    refresh()
+      .then((storeData) => {
+        if ((!storeData || !storeData.store_name) && !["landing", "signin", "signup", "forgot-password", "reset-password"].includes(activeTab)) {
+          setActiveTab("onboarding");
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load store data:", err);
+        showNotice("Store data load failed. Please check connection.", "error");
+      })
+      .finally(() => setAppLoading(false));
+  } else {
+    setCurrentUser(null);
+    setAppLoading(false);
+    setStoreFetchStatus("idle");
+  }
+});
 
     // 2. Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setCurrentUser(session.user);
-        refresh()
-          .catch((err) => console.error("Initial load failed:", err))
-          .finally(() => setAppLoading(false));
-      } else {
-        setCurrentUser(null);
-        setStoreFetchStatus("idle");
-        // If logged out or session expired, redirect to signin/landing
-        const publicTabs = ["landing", "signin", "signup", "forgot-password", "reset-password"];
-        if (!publicTabs.includes(activeTab)) {
-          setActiveTab("landing");
-          showNotice("Session expired or signed out. Please log in.", "error");
-        }
-      }
-    });
+          if (session) {
+            setCurrentUser(session.user);
+            if (event !== "SIGNED_UP") {
+              refresh()
+                .catch((err) => console.error("Initial load failed:", err))
+                .finally(() => setAppLoading(false));
+            }
+          } else {
+            setCurrentUser(null);
+            setStoreFetchStatus("idle");
+            const publicTabs = ["landing", "signin", "signup", "forgot-password", "reset-password"];
+            if (!publicTabs.includes(activeTab)) {
+              setActiveTab("landing");
+              showNotice("Session expired or signed out. Please log in.", "error");
+            }
+          }
+        });
 
     function handleClickOutside(e) {
       if (profileRef.current && !profileRef.current.contains(e.target)) setIsProfileOpen(false);
@@ -665,6 +666,9 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
         }
       });
       if (error) throw error;
+      if (data.session) {
+      setCurrentUser(data.session.user);
+    }
       
       showNotice("Registration successful! Let's set up your store.");
       
@@ -1268,7 +1272,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
                       className="form-input"
                       placeholder="you@example.com"
                       value={authEmail}
-                      onChange={(e) => setAuthEmail(e.target.value)}
+                      onChange={(e) => setAuthEmail(e.target.value.trim())}
                       required
                     />
                   </div>
