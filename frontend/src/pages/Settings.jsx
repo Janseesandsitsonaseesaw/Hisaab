@@ -91,7 +91,8 @@ export default function Settings({
   const [draft, setDraft] = useState(() => ({
     receipt_prefix: "BILL",
     receipt_footer: "Thank you for shopping with us!",
-    theme_color: "light",
+    // Read persisted theme from localStorage so it survives navigation
+    theme_color: localStorage.getItem("hisaab_theme") || "light",
     ...store,
   }));
 
@@ -99,13 +100,18 @@ export default function Settings({
     setDraft({
       receipt_prefix: "BILL",
       receipt_footer: "Thank you for shopping with us!",
-      theme_color: "light",
+      // Always prefer the persisted localStorage value over the DB default
+      theme_color: localStorage.getItem("hisaab_theme") || store?.theme_color || "light",
       ...store,
+      // Override store's theme_color with localStorage so navigation doesn't reset it
+      ...(store && { theme_color: localStorage.getItem("hisaab_theme") || store.theme_color || "light" }),
     });
   }, [store]);
 
+  // Do NOT call applyTheme here — the parent App controls the global theme.
+  // Only persist to localStorage so the parent picks it up on next render.
   useEffect(() => {
-    applyTheme(draft.theme_color);
+    localStorage.setItem("hisaab_theme", draft.theme_color);
   }, [draft.theme_color]);
 
   const latestSale = sales[0];

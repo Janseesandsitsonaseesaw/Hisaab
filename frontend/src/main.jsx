@@ -307,6 +307,18 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
       setStoreFetchStatus("success");
       setAppLoading(false);
 
+      // Only fetch secondary data if a store actually exists.
+      // Skipping these calls prevents 4xx errors for brand-new users who haven't set up a store yet.
+      if (!storeData || !storeData.store_name) {
+        setProducts([]);
+        setSales([]);
+        setCustomers([]);
+        setPurchases([]);
+        setDashboard({ total_products: 0, low_stock_products: [], top_selling_products: [], today_sales: 0, today_profit: 0, weekly_sales: 0, monthly_sales: 0, total_customers: 0, total_udhaar_outstanding: 0, recent_purchases: [], recent_udhaar: [] });
+        setDashboardLoading(false);
+        return storeData;
+      }
+
       // Fetch other less critical elements in the background to ensure instantaneous load!
       Promise.all([
         safeFetch("/products", []),
@@ -430,6 +442,17 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key`}
       setTheme(store.theme_color);
     }
   }, [store?.theme_color]);
+
+  // Sync theme if Settings page updates localStorage (e.g., user picks a theme in Settings)
+  useEffect(() => {
+    function handleStorageChange(e) {
+      if (e.key === "hisaab_theme" && e.newValue && e.newValue !== theme) {
+        setTheme(e.newValue);
+      }
+    }
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [theme]);
 
   useEffect(() => {
     applyTheme(theme);
