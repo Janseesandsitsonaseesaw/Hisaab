@@ -159,13 +159,16 @@ def build_store_context(user_id: str) -> str:
         for p in top_products
     ]
 
-    # Udhaar: every row is a credit entry; sum unpaid amounts per customer
+    # Udhaar: sum credit entries and deduct payment entries per customer
     balances: dict[str, float] = {}
     for entry in udhaar:
-        if not entry.get("paid", False):
-            cid = entry["customer_id"]
-            if cid:
-                balances[cid] = balances.get(cid, 0.0) + (entry["amount"] or 0.0)
+        cid = entry["customer_id"]
+        if cid:
+            amount = entry["amount"] or 0.0
+            if not entry.get("paid", False):
+                balances[cid] = balances.get(cid, 0.0) + amount
+            else:
+                balances[cid] = balances.get(cid, 0.0) - amount
 
     outstanding = sorted(
         [(cid, bal) for cid, bal in balances.items() if bal > 0],

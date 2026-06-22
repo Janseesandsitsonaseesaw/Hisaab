@@ -79,21 +79,6 @@ def get_current_user_id(
                 "password": "SUPABASE_MANAGED"
             }).execute()
             
-            # Initialize default store profile
-            import random
-            default_store = {
-                "id": random.randint(2, 2000000000),
-                "user_id": user_id,
-                "store_name": f"{name}'s Store",
-                "owner_name": name,
-                "phone": "0000000000",
-                "store_category": "Other Retail",
-                "receipt_prefix": "BILL-",
-                "receipt_footer": "Thank you for shopping with us!"
-            }
-            packed_store = pack_store_fields(default_store)
-            supabase.table("store").insert(packed_store).execute()
-            
         return user_id
     except AuthApiError as e:
         raise HTTPException(status_code=401, detail=f"Unauthorized: {str(e)}")
@@ -226,8 +211,8 @@ def parse_date(value: str) -> datetime:
 
 def customer_udhaar_summary(customer_id: str, user_id: str) -> dict:
     entries = supabase.table("udhaar").select("*").eq("customer_id", customer_id).eq("user_id", user_id).execute().data or []
-    total_credit = sum(u["amount"] for u in entries if u["type"] == "credit")
-    total_paid = sum(u["amount"] for u in entries if u["type"] == "payment")
+    total_credit = sum(u["amount"] for u in entries if not u.get("paid"))
+    total_paid = sum(u["amount"] for u in entries if u.get("paid"))
     return {
         "total_credit": total_credit,
         "total_paid": total_paid,
@@ -281,21 +266,6 @@ def register(payload: UserIn, request: Request, ip: str = Depends(get_client_ip)
         
         # Insert profile into our database
         supabase.table("users").insert(user).execute()
-        
-        # Initialize default store profile
-        import random
-        default_store = {
-            "id": random.randint(2, 2000000000),
-            "user_id": user_id,
-            "store_name": f"{payload.name}'s Store",
-            "owner_name": payload.name,
-            "phone": "0000000000",
-            "store_category": "Other Retail",
-            "receipt_prefix": "BILL-",
-            "receipt_footer": "Thank you for shopping with us!"
-        }
-        packed_store = pack_store_fields(default_store)
-        supabase.table("store").insert(packed_store).execute()
         
         return {"user": user, "session": res.session.model_dump() if res.session else None}
     except AuthApiError as e:
@@ -643,8 +613,7 @@ def complete_sale(
             "customer_id": customer_id,
             "sale_id": sale["id"],
             "amount": total,
-            "type": "credit",
-            "note": f"Sale {sale['bill_number']}",
+            "paid": False,
         }).execute()
 
     return sale
@@ -711,18 +680,40 @@ def dashboard(user_id: str = Depends(get_current_user_id)) -> dict:
     for entry in udhaar:
         cid = entry["customer_id"]
         udhaar_balances[cid] = udhaar_balances.get(cid, 0.0)
-        if entry["type"] == "credit":
+        if not entry.get("paid", False):
             udhaar_balances[cid] += entry["amount"]
         else:
             udhaar_balances[cid] -= entry["amount"]
     metrics["total_udhaar_outstanding"] = sum(b for b in udhaar_balances.values() if b > 0)
 
     customers_by_id = {c["id"]: c for c in customers}
-    recent_udhaar = sorted(udhaar, key=lambda u: u["created_at"], reverse=True)[:5]
-    for u in recent_udhaar:
+    recent_db_udhaar = sorted(udhaar, key=lambda u: u["created_at"], reverse=True)[:5]
+    
+    # Map for frontend
+    sale_ids = [u["sale_id"] for u in recent_db_udhaar if u.get("sale_id")]
+    sales_map = {}
+    if sale_ids:
+        sales_data = supabase.table("sales").select("id", "bill_number").in_("id", sale_ids).execute().data or []
+        sales_map = {s["id"]: s["bill_number"] for s in sales_data}
+        
+    recent_mapped = []
+    for u in recent_db_udhaar:
+        is_paid = u.get("paid", False)
+        bill_num = sales_map.get(u.get("sale_id"))
+        note = f"Sale {bill_num}" if bill_num else ("Payment" if is_paid else "Credit")
         c = customers_by_id.get(u["customer_id"])
-        u["customer_name"] = c["name"] if c else "Unknown"
-    metrics["recent_udhaar"] = recent_udhaar
+        recent_mapped.append({
+            "id": u["id"],
+            "user_id": u["user_id"],
+            "created_at": u["created_at"],
+            "customer_id": u["customer_id"],
+            "sale_id": u.get("sale_id"),
+            "amount": u["amount"],
+            "type": "payment" if is_paid else "credit",
+            "note": note,
+            "customer_name": c["name"] if c else "Unknown"
+        })
+    metrics["recent_udhaar"] = recent_mapped
 
     return metrics
 
@@ -783,7 +774,30 @@ def get_customer_udhaar(customer_id: str, user_id: str = Depends(get_current_use
     if not cust:
         raise HTTPException(status_code=404, detail="Customer not found")
     entries = supabase.table("udhaar").select("*").eq("customer_id", customer_id).eq("user_id", user_id).order("created_at", desc=True).execute().data or []
-    return entries
+    
+    # Map entries for frontend
+    sale_ids = [e["sale_id"] for e in entries if e.get("sale_id")]
+    sales_map = {}
+    if sale_ids:
+        sales_data = supabase.table("sales").select("id", "bill_number").in_("id", sale_ids).execute().data or []
+        sales_map = {s["id"]: s["bill_number"] for s in sales_data}
+        
+    mapped_entries = []
+    for e in entries:
+        is_paid = e.get("paid", False)
+        bill_num = sales_map.get(e.get("sale_id"))
+        note = f"Sale {bill_num}" if bill_num else ("Payment" if is_paid else "Credit")
+        mapped_entries.append({
+            "id": e["id"],
+            "user_id": e["user_id"],
+            "created_at": e["created_at"],
+            "customer_id": e["customer_id"],
+            "sale_id": e.get("sale_id"),
+            "amount": e["amount"],
+            "type": "payment" if is_paid else "credit",
+            "note": note
+        })
+    return mapped_entries
 
 @app.post("/udhaar")
 def create_udhaar(payload: UdhaarEntryIn, user_id: str = Depends(get_current_user_id)) -> dict:
@@ -796,9 +810,33 @@ def create_udhaar(payload: UdhaarEntryIn, user_id: str = Depends(get_current_use
         outstanding = customer_udhaar_summary(payload.customer_id, user_id)["outstanding_balance"]
         if payload.amount > outstanding:
             raise HTTPException(status_code=400, detail="Payment amount exceeds outstanding balance")
-    entry = {"id": str(uuid4()), "user_id": user_id, "created_at": datetime.now(timezone.utc).isoformat(), **payload.model_dump()}
-    supabase.table("udhaar").insert(entry).execute()
-    return entry
+            
+    is_paid = (payload.type == "payment")
+    entry_id = str(uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    db_entry = {
+        "id": entry_id,
+        "user_id": user_id,
+        "created_at": now,
+        "customer_id": payload.customer_id,
+        "sale_id": payload.sale_id,
+        "amount": payload.amount,
+        "paid": is_paid,
+        "paid_at": now if is_paid else None
+    }
+    supabase.table("udhaar").insert(db_entry).execute()
+    
+    return {
+        "id": entry_id,
+        "user_id": user_id,
+        "created_at": now,
+        "customer_id": payload.customer_id,
+        "sale_id": payload.sale_id,
+        "amount": payload.amount,
+        "type": payload.type,
+        "note": payload.note or ("Payment" if is_paid else "Credit")
+    }
 
 
 # ── Purchases ─────────────────────────────────────────────────────────────────
